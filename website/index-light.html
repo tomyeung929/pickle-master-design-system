@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pickle Master 匹匠 — Premier Indoor Pickleball Club · Hong Kong</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display+SC:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="lang.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: #FDFAF5; font-family: 'DM Sans', system-ui, sans-serif; color: #1A1208; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #F5F0E8; }
+  ::-webkit-scrollbar-thumb { background: #C9A84C; border-radius: 3px; }
+  input, textarea, select, button { font-family: inherit; }
+  a { color: inherit; }
+
+  @media (max-width: 768px) {
+    .book-main-grid { grid-template-columns: 1fr !important; }
+    .contact-main-grid { grid-template-columns: 1fr !important; }
+    .account-main-grid { grid-template-columns: 1fr !important; }
+    .courts-cta-grid { grid-template-columns: 1fr !important; }
+    .lessons-grid { grid-template-columns: 1fr !important; }
+    .cart-sidebar { width: 100% !important; }
+    section { padding-left: 16px !important; padding-right: 16px !important; }
+  }
+  @media (max-width: 640px) {
+    .coach-cta-col { display: none !important; }
+    .tournament-action { flex-direction: column !important; }
+    .shop-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important; }
+    .membership-grid { grid-template-columns: 1fr !important; }
+    .howto-grid { grid-template-columns: 1fr !important; }
+    .nav-lang-btn { padding: 3px 8px !important; font-size: 10px !important; }
+  }
+</style>
+</head>
+<body>
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="80" fill="#FDFAF5"/>
+  <circle cx="60" cy="36" r="22" fill="none" stroke="#0F3D24" stroke-width="2.5"/>
+  <text x="60" y="32" text-anchor="middle" font-family="serif" font-size="10" font-weight="bold" fill="#0F3D24">PM</text>
+  <text x="60" y="44" text-anchor="middle" font-family="serif" font-size="6" fill="#C9A84C">匹匠</text>
+  <text x="60" y="68" text-anchor="middle" font-family="sans-serif" font-size="5" fill="#9E8E78" letter-spacing="1">PICKLE MASTER</text>
+</svg>
+</template>
+<div id="root"></div>
+
+<script type="text/babel" src="shared-light.jsx"></script>
+<script type="text/babel" src="HomePage-light.jsx"></script>
+<script type="text/babel" src="MemberPage-light.jsx"></script>
+<script type="text/babel" src="BookPage.jsx"></script>
+<script type="text/babel" src="OtherPages-light.jsx"></script>
+<script type="text/babel" src="MorePages-light.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+function App() {
+  const stored = (() => { try { return JSON.parse(localStorage.getItem('pm_light_state') || '{}'); } catch { return {}; } })();
+
+  const [lang,       setLang]       = useState(stored.lang      || 'EN');
+  const [page,       setPage]       = useState(stored.page      || 'home');
+  const [user,       setUser]       = useState(stored.user      || null);
+  const [cart,       setCart]       = useState(stored.cart      || []);
+  const [cartOpen,   setCartOpen]   = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('pm_light_state', JSON.stringify({ lang, page, user, cart }));
+  }, [lang, page, user, cart]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+    setMobileOpen(false);
+  }, [page]);
+
+  function addToCart(item) {
+    setCart(c => [...c, item]);
+    setCartOpen(true);
+  }
+
+  const sharedProps = { lang, setPage, user, setUser, cart, addToCart };
+
+  return (
+    <>
+      <window.Nav
+        page={page} setPage={setPage}
+        lang={lang} setLang={setLang}
+        user={user} setUser={setUser}
+        cart={cart} setCartOpen={setCartOpen}
+        mobileOpen={mobileOpen} setMobileOpen={setMobileOpen}
+      />
+
+      <main>
+        {page === 'home'       && <window.HomePage      {...sharedProps} />}
+        {page === 'member'     && <window.MemberPage    {...sharedProps} />}
+        {page === 'book'       && <window.BookPage      {...sharedProps} />}
+        {page === 'social'     && <window.SocialPage    {...sharedProps} />}
+        {page === 'private'    && <window.PrivatePage   {...sharedProps} />}
+        {page === 'contact'    && <window.ContactPage   {...sharedProps} />}
+        {page === 'login'      && <window.LoginPage     {...sharedProps} />}
+        {page === 'account'    && <window.AccountPage   {...sharedProps} />}
+        {page === 'coaches'    && <window.CoachesPage   {...sharedProps} />}
+        {page === 'tournament' && <window.TournamentPage {...sharedProps} />}
+        {page === 'shop'       && <window.ShopPage      {...sharedProps} />}
+        {page === 'faq'        && <window.FAQPage       {...sharedProps} />}
+      </main>
+
+      <window.Footer setPage={setPage} lang={lang} />
+
+      <window.CartSidebar
+        open={cartOpen} onClose={() => setCartOpen(false)}
+        cart={cart} setCart={setCart}
+        lang={lang} setPage={setPage} user={user}
+      />
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
