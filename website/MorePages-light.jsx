@@ -108,13 +108,31 @@ function CoachesPage({ lang, setPage }) {
 // ─── TOURNAMENT PAGE ──────────────────────────────────────────
 function TournamentPage({ lang, setPage, user }) {
   const t = window.LANG[lang];
+  const { useState, useEffect } = React;
+  const [events, setEvents] = useState([]);
+  const [registering, setRegistering] = useState(null);
+  const [regSuccess, setRegSuccess] = useState(null);
+  const [regError, setRegError] = useState(null);
 
-  const events = [
-    { name: lang==='EN'?'PM Open — Doubles':'PM公開賽 — 雙打', date:'2026-06-07', level:lang==='EN'?'All Levels':'各水平', format:lang==='EN'?'Round Robin + Knockout':'循環賽 + 淘汰賽', fee:'HK$200 / team', status:'open', desc: lang==='EN'?'Pickle Master\'s inaugural doubles tournament. Open to all skill levels. Trophies, prizes, and a banquet for all participants.':'匹匠首屆雙打錦標賽。歡迎各水平球員參加。設有獎杯、獎品及頒獎晚宴。' },
-    { name: lang==='EN'?'Friday Night League':'週五夜聯賽', date:lang==='EN'?'Every Friday · May–July 2026':'每週五 · 2026年5月至7月', level:lang==='EN'?'Beginner–Intermediate':'初級至中級', format:lang==='EN'?'Weekly Round Robin':'每週循環賽', fee:'HK$120 / round', status:'open', desc: lang==='EN'?'A 10-week social league running every Friday evening. Great for building consistency and meeting regular players.':'為期10週的社交聯賽，每週五晚舉行。適合建立穩定球技及認識固定球友。' },
-    { name: lang==='EN'?'PM Members Cup':'PM會員盃', date:'2026-07-19', level:lang==='EN'?'Members Only':'僅限會員', format:lang==='EN'?'Singles Knockout':'單打淘汰賽', fee:lang==='EN'?'Free (Members)':'免費（會員）', status:'members_only', desc: lang==='EN'?'Exclusive tournament for DINK and FLEX members. Singles format, limited spots.':'專為DINK及FLEX會員舉辦的專屬錦標賽。單打制，名額有限。' },
-    { name: lang==='EN'?'Kids Championship':'兒童錦標賽', date:'2026-08-08', level:lang==='EN'?'Age 6–17':'6–17歲', format:lang==='EN'?'Age Group Brackets':'年齡組別分組賽', fee:'HK$150 / player', status:'open', desc: lang==='EN'?'A fun, structured tournament for junior players. Medals for all participants. Coaching tips between rounds.':'為青少年球員舉辦的歡樂錦標賽。所有參賽者均獲獎牌，各輪之間設有教練指導。' },
-  ];
+  useEffect(() => {
+    window.API.get('/api/tournaments').then(res => {
+      if (!res.error) setEvents(res.tournaments || []);
+    }).catch(() => {});
+  }, []);
+
+  async function handleRegister(ev) {
+    if (ev.status === 'members_only' && (!user || user.tier === 'guest')) {
+      setPage('login'); return;
+    }
+    if (ev.status === 'full') return;
+    if (!user) { setPage('login'); return; }
+    setRegistering(ev.key);
+    setRegError(null);
+    const res = await window.API.post(`/api/tournaments/register?key=${ev.key}`, {});
+    setRegistering(null);
+    if (res.error) { setRegError(ev.key + ':' + res.error); }
+    else { setRegSuccess(ev.key); }
+  }
 
   const statusStyle = {
     open:         { bg:'rgba(94,132,116,0.1)',  color:'#5E8474', border:'1px solid rgba(94,132,116,0.3)', label:t.tournament_open },
@@ -142,37 +160,38 @@ function TournamentPage({ lang, setPage, user }) {
 
       <section style={{ padding: '64px 24px', maxWidth: 1000, margin: '0 auto' }}>
         <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9E8E78', marginBottom: 32 }}>{t.tournament_upcoming}</div>
+        {events.length === 0 && <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:14, color:'#9E8E78' }}>Loading events...</div>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {events.map((ev, i) => {
-            const ss = statusStyle[ev.status];
+            const ss = statusStyle[ev.status] || statusStyle.open;
+            const isRegistering = registering === ev.key;
+            const didReg = regSuccess === ev.key;
+            const errMsg = regError && regError.startsWith(ev.key+':') ? regError.slice(ev.key.length+1) : null;
             return (
               <div key={i} style={{ background: '#FFFFFF', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 12px rgba(26,18,8,0.07)', border: '1px solid #EDE8DF' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'start', gap: 16, padding: '24px 28px' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontFamily: "'Playfair Display SC',serif", fontSize: 18, fontWeight: 700, color: '#0F3D24' }}>{ev.name}</span>
+                      <span style={{ fontFamily: "'Playfair Display SC',serif", fontSize: 18, fontWeight: 700, color: '#0F3D24' }}>{lang==='EN' ? ev.name_en : ev.name_zh}</span>
                       <span style={{ fontFamily: "'Oswald',sans-serif", fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: 999, background: ss.bg, color: ss.color, border: ss.border }}>{ss.label}</span>
                     </div>
-                    <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: '#6B5D4E', lineHeight: 1.7, marginBottom: 16, maxWidth: 600 }}>{ev.desc}</p>
                     <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-                      {[
-                        { label:t.tournament_date, val:ev.date },
-                        { label:t.tournament_format, val:ev.format },
-                        { label:t.tournament_level, val:ev.level },
-                        { label:t.tournament_fee, val:ev.fee },
-                      ].map(({ label, val }) => (
-                        <div key={label}>
-                          <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9E8E78', marginBottom: 3 }}>{label}</div>
-                          <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, fontWeight: 500, color: '#0F3D24' }}>{val}</div>
-                        </div>
-                      ))}
+                      <div>
+                        <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9E8E78', marginBottom: 3 }}>{t.tournament_date}</div>
+                        <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, fontWeight: 500, color: '#0F3D24' }}>{ev.date_label || '—'}</div>
+                      </div>
                     </div>
+                    {errMsg && <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:12, color:'#C0392B', marginTop:8 }}>{errMsg}</div>}
                   </div>
-                  <div style={{ paddingTop: 4 }}>
-                    <button onClick={() => ev.status === 'members_only' && !user ? setPage('login') : setPage('contact')}
-                      style={{ background: ev.status === 'full' ? '#D6CBBA' : '#C9A84C', color: ev.status === 'full' ? '#9E8E78' : '#0F3D24', border: 'none', borderRadius: 999, padding: '12px 24px', fontFamily: "'Oswald',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: ev.status === 'full' ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
-                      {ev.status === 'full' ? t.tournament_full : t.tournament_register}
-                    </button>
+                  <div style={{ paddingTop: 4, display:'flex', flexDirection:'column', gap:6 }}>
+                    {didReg ? (
+                      <span style={{ fontFamily:"'Oswald',sans-serif", fontSize:11, color:'#5E8474', letterSpacing:'0.08em' }}>✓ Registered</span>
+                    ) : (
+                      <button onClick={() => handleRegister(ev)} disabled={ev.status === 'full' || isRegistering}
+                        style={{ background: ev.status === 'full' ? '#D6CBBA' : '#C9A84C', color: ev.status === 'full' ? '#9E8E78' : '#0F3D24', border: 'none', borderRadius: 999, padding: '12px 24px', fontFamily: "'Oswald',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: (ev.status === 'full' || isRegistering) ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
+                        {isRegistering ? '...' : ev.status === 'full' ? t.tournament_full : t.tournament_register}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -187,20 +206,18 @@ function TournamentPage({ lang, setPage, user }) {
 // ─── SHOP PAGE ────────────────────────────────────────────────
 function ShopPage({ lang, addToCart, user }) {
   const t = window.LANG[lang];
-  const { useState } = React;
+  const { useState, useEffect } = React;
   const [cat, setCat] = useState('all');
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
-  const products = [
-    { id:1, cat:'paddles', name:'PM Pro Paddle', name_zh:'PM 專業球拍', price:980, memberPrice:880, desc:'Carbon fibre face, polymer honeycomb core. Balanced power and control.', desc_zh:'碳纖維面板，高分子蜂巢芯。力量與控制完美平衡。', badge:lang==='EN'?'Bestseller':'最暢銷', inStock:true, img:'https://images.pexels.com/photos/9004559/pexels-photo-9004559.jpeg?auto=compress&cs=tinysrgb&w=600&q=72' },
-    { id:2, cat:'paddles', name:'PM Classic Paddle', name_zh:'PM 經典球拍', price:680, memberPrice:612, desc:'Fibreglass face, lightweight design. Perfect for social play and beginners.', desc_zh:'玻璃纖維面板，輕量設計，適合社交賽及初學者。', badge:'', inStock:true, img:'https://images.pexels.com/photos/9004558/pexels-photo-9004558.jpeg?auto=compress&cs=tinysrgb&w=600&q=72' },
-    { id:3, cat:'paddles', name:'PM Junior Paddle', name_zh:'PM 青少年球拍', price:380, memberPrice:342, desc:'Shorter grip, lighter weight. Designed for players aged 6–14.', desc_zh:'較短握把，更輕重量，專為6–14歲球員設計。', badge:'', inStock:true, img:'https://images.pexels.com/photos/6765846/pexels-photo-6765846.jpeg?auto=compress&cs=tinysrgb&w=600&q=72' },
-    { id:4, cat:'apparel', name:'PM Club Tee', name_zh:'PM 球會T恤', price:280, memberPrice:252, desc:'100% cotton. Forest green with gold PM logo embroidery.', desc_zh:'100%棉質。森林綠配金色PM刺繡標誌。', badge:'', inStock:true, img:'https://images.pexels.com/photos/5568971/pexels-photo-5568971.jpeg?auto=compress&cs=tinysrgb&w=600&q=72' },
-    { id:5, cat:'apparel', name:'PM Performance Polo', name_zh:'PM 運動Polo衫', price:420, memberPrice:378, desc:'Moisture-wicking fabric. Slim fit. Available in forest green and cream.', desc_zh:'速乾面料，修身版型。提供森林綠及米色。', badge:lang==='EN'?'New':'新品', inStock:true, img:'https://images.pexels.com/photos/3768916/pexels-photo-3768916.jpeg?auto=compress&cs=tinysrgb&w=600&q=72' },
-    { id:6, cat:'apparel', name:'PM Cap', name_zh:'PM 球帽', price:220, memberPrice:198, desc:'Structured 6-panel cap. Gold embroidered logo. One size fits all.', desc_zh:'硬挺六片帽。金色刺繡標誌，均碼。', badge:'', inStock:false, img:'https://images.pexels.com/photos/7991579/pexels-photo-7991579.jpeg?auto=compress&cs=tinysrgb&w=600&q=72' },
-    { id:7, cat:'accessories', name:'PM Paddle Bag', name_zh:'PM 球拍袋', price:350, memberPrice:315, desc:'Holds 2 paddles + accessories. Padded interior, water-resistant exterior.', desc_zh:'可放2支球拍及配件。內置防震層，防水外層。', badge:'', inStock:true, img:'https://images.pexels.com/photos/6765846/pexels-photo-6765846.jpeg?auto=compress&cs=tinysrgb&w=600&q=72' },
-    { id:8, cat:'accessories', name:'PM Pickleball (3-pack)', name_zh:'PM 匹克球（3個裝）', price:120, memberPrice:108, desc:'Outdoor/indoor approved. USAPA compliant. Forest green with gold PM mark.', desc_zh:'室內外通用，符合USAPA標準，森林綠配金色PM標記。', badge:'', inStock:true, img:'https://images.pexels.com/photos/9004558/pexels-photo-9004558.jpeg?auto=compress&cs=tinysrgb&w=600&q=72' },
-    { id:9, cat:'accessories', name:'PM Grip Tape (2-pack)', name_zh:'PM 握把布（2條裝）', price:80, memberPrice:72, desc:'Absorbent, tacky feel. Fits all standard paddle handles.', desc_zh:'吸汗防滑，適合所有標準球拍握把。', badge:'', inStock:true, img:'https://images.pexels.com/photos/9004559/pexels-photo-9004559.jpeg?auto=compress&cs=tinysrgb&w=600&q=72' },
-  ];
+  useEffect(() => {
+    const url = cat === 'all' ? '/api/shop/products' : `/api/shop/products?category=${cat}`;
+    setLoadingProducts(true);
+    window.API.get(url)
+      .then(res => { if (!res.error) setProducts(res.products || []); })
+      .finally(() => setLoadingProducts(false));
+  }, [cat]);
 
   const cats = [
     { id:'all', label:t.shop_all },
@@ -208,8 +225,17 @@ function ShopPage({ lang, addToCart, user }) {
     { id:'apparel', label:t.shop_cat_apparel },
     { id:'accessories', label:t.shop_cat_accessories },
   ];
-  const filtered = cat === 'all' ? products : products.filter(p => p.cat === cat);
-  function handleAdd(p) { addToCart({ name: lang==='EN'?p.name:p.name_zh, detail: lang==='EN'?'Merchandise':'商品', price: user ? p.memberPrice : p.price, qty:1 }); }
+
+  function handleAdd(p) {
+    addToCart({
+      type: 'product',
+      product_id: p.id,
+      name: lang==='EN' ? p.name_en : p.name_zh,
+      detail: lang==='EN' ? 'Merchandise' : '商品',
+      price: user ? p.member_price : p.price,
+      qty: 1,
+    });
+  }
 
   return (
     <div style={{ background: '#FDFAF5' }}>
@@ -242,31 +268,33 @@ function ShopPage({ lang, addToCart, user }) {
 
       {/* Products */}
       <section style={{ padding: '40px 24px 80px', maxWidth: 1100, margin: '0 auto' }}>
+        {loadingProducts && <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:14, color:'#9E8E78', marginBottom:24 }}>Loading products...</div>}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 20 }}>
-          {filtered.map(p => {
-            const price = user ? p.memberPrice : p.price;
+          {products.map(p => {
+            const badge = lang==='EN' ? p.badge_en : p.badge_zh;
+            const price = user ? p.member_price : p.price;
             return (
               <div key={p.id} style={{ background: '#FFFFFF', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 12px rgba(26,18,8,0.07)', border: '1px solid #EDE8DF', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ height: 180, overflow: 'hidden', position: 'relative', background: '#C8DDD5' }}>
-                  <img src={p.img} alt={lang==='EN'?p.name:p.name_zh} loading="lazy"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: !p.inStock ? 'grayscale(40%)' : 'none' }} />
+                  {p.image_url && <img src={p.image_url} alt={lang==='EN'?p.name_en:p.name_zh} loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: !p.in_stock ? 'grayscale(40%)' : 'none' }} />}
                   <div style={{ position: 'absolute', inset: 0, background: 'rgba(15,61,36,0.15)' }} />
                   <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 6 }}>
-                    {p.badge && <span style={{ fontFamily: "'Oswald',sans-serif", fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: 999, background: '#C9A84C', color: '#0F3D24', fontWeight: 700 }}>{p.badge}</span>}
-                    {!p.inStock && <span style={{ fontFamily: "'Oswald',sans-serif", fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: 999, background: 'rgba(0,0,0,0.5)', color: '#D6CBBA' }}>{t.shop_sold_out}</span>}
+                    {badge && <span style={{ fontFamily: "'Oswald',sans-serif", fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: 999, background: '#C9A84C', color: '#0F3D24', fontWeight: 700 }}>{badge}</span>}
+                    {!p.in_stock && <span style={{ fontFamily: "'Oswald',sans-serif", fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: 999, background: 'rgba(0,0,0,0.5)', color: '#D6CBBA' }}>{t.shop_sold_out}</span>}
                   </div>
                 </div>
                 <div style={{ padding: '18px 20px', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ fontFamily: "'Playfair Display SC',serif", fontSize: 16, fontWeight: 700, color: '#0F3D24' }}>{lang==='EN'?p.name:p.name_zh}</div>
-                  <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: '#6B5D4E', lineHeight: 1.6, flex: 1 }}>{lang==='EN'?p.desc:p.desc_zh}</div>
+                  <div style={{ fontFamily: "'Playfair Display SC',serif", fontSize: 16, fontWeight: 700, color: '#0F3D24' }}>{lang==='EN'?p.name_en:p.name_zh}</div>
+                  <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: '#6B5D4E', lineHeight: 1.6, flex: 1 }}>{lang==='EN'?p.description_en:p.description_zh}</div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
                     <div>
                       <span style={{ fontFamily: "'Oswald',sans-serif", fontSize: 20, fontWeight: 700, color: '#0F3D24' }}>HK${price}</span>
-                      {user && p.memberPrice < p.price && <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: '#5E8474', marginLeft: 6 }}>{t.shop_member_price}</span>}
+                      {user && p.member_price < p.price && <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: '#5E8474', marginLeft: 6 }}>{t.shop_member_price}</span>}
                     </div>
-                    <button onClick={() => p.inStock && handleAdd(p)} disabled={!p.inStock}
-                      style={{ background: p.inStock?'#C9A84C':'#D6CBBA', color: p.inStock?'#0F3D24':'#9E8E78', border: 'none', borderRadius: 999, padding: '10px 20px', fontFamily: "'Oswald',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: p.inStock?'pointer':'not-allowed' }}>
-                      {p.inStock ? t.shop_add : t.shop_sold_out}
+                    <button onClick={() => p.in_stock && handleAdd(p)} disabled={!p.in_stock}
+                      style={{ background: p.in_stock?'#C9A84C':'#D6CBBA', color: p.in_stock?'#0F3D24':'#9E8E78', border: 'none', borderRadius: 999, padding: '10px 20px', fontFamily: "'Oswald',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: p.in_stock?'pointer':'not-allowed' }}>
+                      {p.in_stock ? t.shop_add : t.shop_sold_out}
                     </button>
                   </div>
                 </div>

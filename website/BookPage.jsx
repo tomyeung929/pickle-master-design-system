@@ -4,7 +4,8 @@ function BookPage({ lang, addToCart, user, setPage }) {
   const t = window.LANG[lang];
   const { useState } = React;
 
-  const today = new Date(2026, 3, 24); // April 24 2026
+  const { useEffect } = React;
+  const today = new Date();
   const [selectedCourt, setSelectedCourt] = useState(0);
   const [selectedType, setSelectedType] = useState(0);
   const [calYear, setCalYear] = useState(today.getFullYear());
@@ -12,10 +13,19 @@ function BookPage({ lang, addToCart, user, setPage }) {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [added, setAdded] = useState(false);
+  const [slotAvailability, setSlotAvailability] = useState({});
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [dbCourts, setDbCourts] = useState([]);
+
+  useEffect(() => {
+    window.API.get('/api/courts').then(res => {
+      if (!res.error && res.courts) setDbCourts(res.courts);
+    }).catch(() => {});
+  }, []);
 
   const courts = [
-    { id: 'court1', label: t.book_court1 },
-    { id: 'court2', label: t.book_court2 },
+    { id: dbCourts[0]?.id || null, label: t.book_court1 },
+    { id: dbCourts[1]?.id || null, label: t.book_court2 },
   ];
 
   const sessionTypes = [
@@ -54,12 +64,27 @@ function BookPage({ lang, addToCart, user, setPage }) {
     if (typeKey === 'nonpeak') return npSlots;
     return classSlots;
   };
-  // Simulate some slots as limited/full
+  // Fetch real availability when date or court or session type changes
+  useEffect(() => {
+    if (!selectedDate || !courts[selectedCourt]?.id) return;
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(selectedDate).padStart(2,'0')}`;
+    const courtId = courts[selectedCourt].id;
+    const sessionTypeKey = sessionTypes[selectedType].key;
+    setLoadingSlots(true);
+    window.API.get(`/api/bookings/availability?court_id=${courtId}&date=${dateStr}&session_type=${sessionTypeKey}`)
+      .then(res => {
+        if (!res.error && res.slots) {
+          const map = {};
+          res.slots.forEach(s => { map[s.slot] = s.status; });
+          setSlotAvailability(map);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingSlots(false));
+  }, [selectedDate, selectedCourt, selectedType, calYear, calMonth, dbCourts]);
+
   function slotStatus(slot) {
-    const hash = slot.charCodeAt(0) + slot.charCodeAt(1);
-    if (hash % 5 === 0) return 'full';
-    if (hash % 3 === 0) return 'limited';
-    return 'available';
+    return slotAvailability[slot] || 'available';
   }
 
   const currentType = sessionTypes[selectedType];
@@ -70,6 +95,11 @@ function BookPage({ lang, addToCart, user, setPage }) {
     if (!selectedSlot || !selectedDate) return;
     const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(selectedDate).padStart(2,'0')}`;
     addToCart({
+      type: 'booking',
+      courtId: courts[selectedCourt].id,
+      sessionType: currentType.key,
+      date: dateStr,
+      time: selectedSlot,
       name: `${courts[selectedCourt].label} — ${currentType.label}`,
       detail: `${dateStr} · ${selectedSlot}`,
       price: displayPrice,
@@ -195,6 +225,7 @@ function BookPage({ lang, addToCart, user, setPage }) {
             {selectedDate && (
               <div>
                 <div style={{ fontFamily:"'Oswald',sans-serif", fontSize:11, letterSpacing:'0.15em', textTransform:'uppercase', color:'#9E8E78', marginBottom:12 }}>{t.book_select_time}</div>
+                {loadingSlots && <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:13, color:'#9E8E78', marginBottom:8 }}>Loading availability...</div>}
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(100px,1fr))', gap:10 }}>
                   {slots.map(slot => {
                     const status = slotStatus(slot);

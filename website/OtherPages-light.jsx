@@ -142,9 +142,19 @@ function ContactPage({ lang }) {
   const t = window.LANG[lang];
   const { useState } = React;
   const [form, setForm] = useState({ name:'', email:'', subject:'', message:'' });
-  const [sent, setSent] = useState(false);
+  const [sent, setSent]     = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]   = useState(null);
 
-  function submit(e) { e.preventDefault(); setSent(true); }
+  async function submit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    const res = await window.API.post('/api/contact', form);
+    setLoading(false);
+    if (res.error) { setError(res.error); return; }
+    setSent(true);
+  }
 
   return (
     <div style={{ background:'#FDFAF5' }}>
@@ -190,7 +200,8 @@ function ContactPage({ lang }) {
                 <textarea required rows={5} value={form.message} onChange={e => setForm(f=>({...f,message:e.target.value}))}
                   style={{ width:'100%', padding:'12px 14px', border:'1.5px solid #D6CBBA', borderRadius:6, fontFamily:"'DM Sans',sans-serif", fontSize:14, color:'#1A1208', background:'#fff', outline:'none', resize:'vertical', boxSizing:'border-box' }} />
               </div>
-              <button type="submit" style={{ background:'#C9A84C', color:'#0F3D24', border:'none', borderRadius:999, padding:'15px 0', fontFamily:"'Oswald',sans-serif", fontSize:13, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', cursor:'pointer' }}>{t.contact_send}</button>
+              {error && <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:13, color:'#C0392B', background:'#FEF0F0', border:'1px solid #F5C6CB', borderRadius:6, padding:'10px 14px' }}>{error}</div>}
+              <button type="submit" disabled={loading} style={{ background: loading ? '#9E8E78' : '#C9A84C', color:'#0F3D24', border:'none', borderRadius:999, padding:'15px 0', fontFamily:"'Oswald',sans-serif", fontSize:13, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', cursor: loading ? 'not-allowed' : 'pointer' }}>{loading ? '...' : t.contact_send}</button>
             </form>
           )}
         </div>
@@ -222,12 +233,24 @@ function ContactPage({ lang }) {
 function LoginPage({ lang, setUser, setPage }) {
   const t = window.LANG[lang];
   const { useState } = React;
-  const [mode, setMode] = useState('login');
-  const [form, setForm] = useState({ name:'', email:'', password:'' });
+  const [mode, setMode]     = useState('login');
+  const [form, setForm]     = useState({ name:'', email:'', password:'' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError]   = useState(null);
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault();
-    setUser({ name: form.name || (lang==='EN'?'Member':'會員'), email: form.email, tier: 'DINK' });
+    setLoading(true);
+    setError(null);
+    const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+    const body = mode === 'login'
+      ? { email: form.email, password: form.password }
+      : { name: form.name, email: form.email, password: form.password };
+    const res = await window.API.post(endpoint, body);
+    setLoading(false);
+    if (res.error) { setError(res.error); return; }
+    window.API.saveToken(res.session.access_token, res.user);
+    setUser(res.user);
     setPage('account');
   }
 
@@ -261,8 +284,9 @@ function LoginPage({ lang, setUser, setPage }) {
               </div>
             ))}
             {mode==='login' && <div style={{ textAlign:'right' }}><span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:12, color:'#C9A84C', cursor:'pointer' }}>{t.login_forgot}</span></div>}
-            <button type="submit" style={{ background:'#C9A84C', color:'#0F3D24', border:'none', borderRadius:999, padding:'15px 0', fontFamily:"'Oswald',sans-serif", fontSize:13, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', cursor:'pointer', marginTop:8, boxShadow:'0 2px 12px rgba(201,168,76,0.3)' }}>
-              {mode==='login'?t.login_submit:t.register_submit}
+            {error && <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:13, color:'#C0392B', background:'#FEF0F0', border:'1px solid #F5C6CB', borderRadius:6, padding:'10px 14px' }}>{error}</div>}
+            <button type="submit" disabled={loading} style={{ background: loading ? '#9E8E78' : '#C9A84C', color:'#0F3D24', border:'none', borderRadius:999, padding:'15px 0', fontFamily:"'Oswald',sans-serif", fontSize:13, fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', cursor: loading ? 'not-allowed' : 'pointer', marginTop:8, boxShadow:'0 2px 12px rgba(201,168,76,0.3)' }}>
+              {loading ? '...' : (mode==='login'?t.login_submit:t.register_submit)}
             </button>
           </form>
         </div>
@@ -274,10 +298,22 @@ function LoginPage({ lang, setUser, setPage }) {
 // ─── ACCOUNT PAGE ─────────────────────────────────────────────
 function AccountPage({ lang, user, setUser, setPage, cart }) {
   const t = window.LANG[lang];
-  const bookings = [
-    { name: lang==='EN'?'Court 1 — Open Play':'1號球場 — 開放賽', date:'2026-05-02', time:'18:00', price:405 },
-    { name: lang==='EN'?'Court 2 — Social Play':'2號球場 — 社交賽', date:'2026-05-08', time:'19:30', price:160 },
-  ];
+  const { useState, useEffect } = React;
+  const [bookings, setBookings]       = useState([]);
+  const [loadingBookings, setLoadingB] = useState(true);
+
+  useEffect(() => {
+    window.API.get('/api/bookings/mine')
+      .then(res => { if (!res.error) setBookings(res.bookings || []); })
+      .finally(() => setLoadingB(false));
+  }, []);
+
+  async function logout() {
+    await window.API.post('/api/auth/logout', {}).catch(() => {});
+    window.API.clearToken();
+    setUser(null);
+    setPage('home');
+  }
 
   return (
     <div style={{ background:'#FDFAF5', minHeight:'80vh' }}>
@@ -295,7 +331,7 @@ function AccountPage({ lang, user, setUser, setPage, cart }) {
               <span style={{ fontFamily:"'Oswald',sans-serif", fontSize:10, letterSpacing:'0.12em', textTransform:'uppercase', color:'#C9A84C' }}>{user?.tier || 'DINK'} {t.account_member_status}</span>
             </div>
           </div>
-          <button onClick={() => { setUser(null); setPage('home'); }} style={{ marginLeft:'auto', background:'transparent', border:'1px solid rgba(245,240,232,0.2)', borderRadius:999, padding:'10px 20px', fontFamily:"'Oswald',sans-serif", fontSize:11, letterSpacing:'0.1em', textTransform:'uppercase', color:'#9E8E78', cursor:'pointer' }}>{t.nav_logout}</button>
+          <button onClick={logout} style={{ marginLeft:'auto', background:'transparent', border:'1px solid rgba(245,240,232,0.2)', borderRadius:999, padding:'10px 20px', fontFamily:"'Oswald',sans-serif", fontSize:11, letterSpacing:'0.1em', textTransform:'uppercase', color:'#9E8E78', cursor:'pointer' }}>{t.nav_logout}</button>
         </div>
       </section>
       <div style={{ height:2, background:'linear-gradient(90deg,#C9A84C,transparent)' }}/>
@@ -304,13 +340,21 @@ function AccountPage({ lang, user, setUser, setPage, cart }) {
         <div>
           <div style={{ fontFamily:"'Oswald',sans-serif", fontSize:11, letterSpacing:'0.15em', textTransform:'uppercase', color:'#9E8E78', marginBottom:16 }}>{t.account_bookings}</div>
           <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-            {bookings.map((b,i) => (
+            {loadingBookings ? (
+              <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:13, color:'#9E8E78', padding:'20px 0' }}>Loading...</div>
+            ) : bookings.length === 0 ? (
+              <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:13, color:'#9E8E78', padding:'20px 0' }}>{lang==='EN'?'No upcoming bookings.':'暫無預訂。'}</div>
+            ) : bookings.map((b,i) => (
               <div key={i} style={{ background:'#FFFFFF', borderRadius:12, padding:'18px 20px', boxShadow:'0 2px 10px rgba(26,18,8,0.06)', border:'1px solid #EDE8DF', display:'flex', alignItems:'center', gap:16, borderLeft:'3px solid #C9A84C' }}>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600, color:'#0F3D24' }}>{b.name}</div>
-                  <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:12, color:'#9E8E78', marginTop:3 }}>{b.date} · {b.time}</div>
+                  <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:14, fontWeight:600, color:'#0F3D24' }}>
+                    {(b.courts?.name || 'Court')} — {lang==='EN' ? (b.session_types?.label_en||'Session') : (b.session_types?.label_zh||'課程')}
+                  </div>
+                  <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:12, color:'#9E8E78', marginTop:3 }}>
+                    {b.booking_date} · {(b.slot_time||'').slice(0,5)}
+                  </div>
                 </div>
-                <div style={{ fontFamily:"'Oswald',sans-serif", fontSize:18, fontWeight:700, color:'#C9A84C' }}>HK${b.price}</div>
+                <div style={{ fontFamily:"'Oswald',sans-serif", fontSize:18, fontWeight:700, color:'#C9A84C' }}>HK${b.price_paid}</div>
               </div>
             ))}
             <button onClick={() => setPage('book')} style={{ background:'#0F3D24', color:'#F5F0E8', border:'none', borderRadius:999, padding:'14px 0', fontFamily:"'Oswald',sans-serif", fontSize:12, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', cursor:'pointer', marginTop:8 }}>{t.account_book_now}</button>

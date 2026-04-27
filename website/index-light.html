@@ -9,7 +9,45 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://js.stripe.com/v3/"></script>
 <script src="lang.js"></script>
+<script>
+window.STRIPE_PK = 'pk_test_REPLACE_WITH_YOUR_STRIPE_PUBLISHABLE_KEY';
+
+window.API = {
+  getToken: function() {
+    try { return JSON.parse(localStorage.getItem('pm_light_state') || '{}').token || null; } catch { return null; }
+  },
+  headers: function() {
+    var t = window.API.getToken();
+    var h = { 'Content-Type': 'application/json' };
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
+  },
+  get: function(path) {
+    return fetch(path, { headers: window.API.headers() }).then(function(r) { return r.json(); });
+  },
+  post: function(path, body) {
+    return fetch(path, { method: 'POST', headers: window.API.headers(), body: JSON.stringify(body) }).then(function(r) { return r.json(); });
+  },
+  saveToken: function(token, user) {
+    try {
+      var s = JSON.parse(localStorage.getItem('pm_light_state') || '{}');
+      s.token = token;
+      s.user = user;
+      localStorage.setItem('pm_light_state', JSON.stringify(s));
+    } catch {}
+  },
+  clearToken: function() {
+    try {
+      var s = JSON.parse(localStorage.getItem('pm_light_state') || '{}');
+      delete s.token;
+      delete s.user;
+      localStorage.setItem('pm_light_state', JSON.stringify(s));
+    } catch {}
+  },
+};
+</script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -72,8 +110,31 @@ function App() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('pm_light_state', JSON.stringify({ lang, page, user, cart }));
+    const stored = JSON.parse(localStorage.getItem('pm_light_state') || '{}');
+    localStorage.setItem('pm_light_state', JSON.stringify({ ...stored, lang, page, user, cart }));
   }, [lang, page, user, cart]);
+
+  // Validate stored JWT on mount and refresh user tier from server
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('pm_light_state') || '{}');
+    if (stored.token) {
+      window.API.get('/api/auth/me').then(res => {
+        if (res.error) {
+          window.API.clearToken();
+          setUser(null);
+        } else {
+          setUser(res.user);
+        }
+      }).catch(() => {});
+    }
+    // Handle membership subscription redirect from Stripe
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscription') === 'success') {
+      const tier = params.get('tier');
+      if (tier && user) setUser(u => ({ ...u, tier }));
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });

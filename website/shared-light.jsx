@@ -216,16 +216,79 @@ function Footer({ setPage, lang }) {
 // ─── CART SIDEBAR (LIGHT) ─────────────────────────────────────
 function CartSidebar({ open, onClose, cart, setCart, lang, setPage, user }) {
   const t = window.LANG[lang];
-  const [checkout, setCheckout] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [form, setForm] = useState({ name: '', card: '', expiry: '', cvc: '' });
-  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const [checkout, setCheckout]     = useState(false);
+  const [success, setSuccess]       = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [apiError, setApiError]     = useState(null);
+  const [clientSecret, setClientSecret] = useState(null);
+  const [stripeObj, setStripeObj]   = useState(null);
+  const [elements, setElements]     = useState(null);
+  const total = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
 
   function remove(idx) { setCart(c => c.filter((_, i) => i !== idx)); }
-  function doCheckout(e) {
+
+  async function startCheckout() {
+    setLoading(true);
+    setApiError(null);
+    const res = await window.API.post('/api/checkout/create-intent', {
+      cart: cart.map(i => ({
+        type: i.courtId ? 'booking' : 'product',
+        courtId: i.courtId,
+        sessionType: i.sessionType,
+        date: i.date,
+        time: i.time,
+        product_id: i.product_id,
+        qty: i.qty || 1,
+        price: i.price,
+        name: i.name,
+        detail: i.detail,
+      })),
+      guest_name:  user ? user.name  : '',
+      guest_email: user ? user.email : '',
+    });
+    setLoading(false);
+    if (res.error) { setApiError(res.error); return; }
+
+    setClientSecret(res.client_secret);
+    setCheckout(true);
+
+    const stripe = window.Stripe(window.STRIPE_PK);
+    setStripeObj(stripe);
+    const els = stripe.elements({ clientSecret: res.client_secret, appearance: { theme: 'flat', variables: { colorPrimary: '#0F3D24', colorBackground: '#FDFAF5', fontFamily: 'DM Sans, sans-serif' } } });
+    setElements(els);
+    setTimeout(() => {
+      const pe = els.create('payment');
+      pe.mount('#pm-stripe-payment-element');
+    }, 50);
+  }
+
+  async function doCheckout(e) {
     e.preventDefault();
+    if (!stripeObj || !elements) return;
+    setProcessing(true);
+    setApiError(null);
+    const { error, paymentIntent } = await stripeObj.confirmPayment({
+      elements,
+      confirmParams: { return_url: window.location.href },
+      redirect: 'if_required',
+    });
+    if (error) { setApiError(error.message); setProcessing(false); return; }
+
+    const confirmRes = await window.API.post('/api/checkout/confirm', { payment_intent_id: paymentIntent.id });
+    setProcessing(false);
+    if (confirmRes.error) { setApiError(confirmRes.error); return; }
+
     setSuccess(true);
-    setTimeout(() => { setCart([]); setSuccess(false); setCheckout(false); onClose(); }, 2500);
+    setTimeout(() => {
+      setCart([]);
+      setSuccess(false);
+      setCheckout(false);
+      setClientSecret(null);
+      setStripeObj(null);
+      setElements(null);
+      onClose();
+    }, 2800);
   }
 
   if (!open) return null;
@@ -250,16 +313,13 @@ function CartSidebar({ open, onClose, cart, setCart, lang, setPage, user }) {
           </div>
         ) : checkout ? (
           <form onSubmit={doCheckout} style={{ flex: 1, padding: 24, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto' }}>
-            {[{ key: 'name', label: t.checkout_name, ph: 'Wing-Sze Lam' }, { key: 'card', label: t.checkout_card, ph: '•••• •••• •••• ••••' }, { key: 'expiry', label: t.checkout_expiry, ph: 'MM/YY' }, { key: 'cvc', label: t.checkout_cvc, ph: '•••' }].map(({ key, label, ph }) => (
-              <div key={key}>
-                <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9E8E78', marginBottom: 6 }}>{label}</div>
-                <input required placeholder={ph} value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #D6CBBA', borderRadius: 4, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: '#1A1208', background: '#fff', outline: 'none' }} />
-              </div>
-            ))}
+            <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9E8E78', marginBottom: 4 }}>Payment Details</div>
+            <div id="pm-stripe-payment-element" style={{ minHeight: 160 }} />
+            {apiError && <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: '#C0392B', background: '#FEF0F0', border: '1px solid #F5C6CB', borderRadius: 6, padding: '10px 14px' }}>{apiError}</div>}
             <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 13, fontWeight: 700, color: '#0F3D24', display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderTop: '1px solid #D6CBBA', marginTop: 8 }}>
               <span>{t.cart_total}</span><span>HK${total}</span>
             </div>
-            <button type="submit" style={{ background: '#C9A84C', color: '#0F3D24', border: 'none', borderRadius: 999, padding: '15px 0', fontFamily: "'Oswald',sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 2px 12px rgba(201,168,76,0.35)' }}>{t.checkout_pay} — HK${total}</button>
+            <button type="submit" disabled={processing} style={{ background: processing ? '#9E8E78' : '#C9A84C', color: '#0F3D24', border: 'none', borderRadius: 999, padding: '15px 0', fontFamily: "'Oswald',sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: processing ? 'not-allowed' : 'pointer', boxShadow: '0 2px 12px rgba(201,168,76,0.35)' }}>{processing ? 'Processing...' : `${t.checkout_pay} — HK$${total}`}</button>
           </form>
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -289,7 +349,8 @@ function CartSidebar({ open, onClose, cart, setCart, lang, setPage, user }) {
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'Oswald',sans-serif", fontSize: 14, fontWeight: 700, color: '#0F3D24', marginBottom: 16 }}>
                     <span>{t.cart_total}</span><span>HK${total}</span>
                   </div>
-                  <button onClick={() => setCheckout(true)} style={{ width: '100%', background: '#C9A84C', color: '#0F3D24', border: 'none', borderRadius: 999, padding: '15px 0', fontFamily: "'Oswald',sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 2px 12px rgba(201,168,76,0.35)' }}>{t.cart_checkout}</button>
+                  {apiError && <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: '#C0392B', background: '#FEF0F0', border: '1px solid #F5C6CB', borderRadius: 6, padding: '10px 14px', marginBottom: 12 }}>{apiError}</div>}
+                  <button onClick={startCheckout} disabled={loading} style={{ width: '100%', background: loading ? '#9E8E78' : '#C9A84C', color: '#0F3D24', border: 'none', borderRadius: 999, padding: '15px 0', fontFamily: "'Oswald',sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 2px 12px rgba(201,168,76,0.35)' }}>{loading ? 'Loading...' : t.cart_checkout}</button>
                 </div>
               </>
             )}
