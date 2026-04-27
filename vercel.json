@@ -1,7 +1,8 @@
 {
   "rewrites": [
     { "source": "/", "destination": "/website/index-light.html" },
-    { "source": "/dark", "destination": "/website/index.html" }
+    { "source": "/dark", "destination": "/website/index.html" },
+    { "source": "/:path+", "destination": "/website/:path+" }
   ],
   "functions": {
     "api/**/*.js": {
@@ -9,4 +10,3 @@
     }
   }
 }
-
