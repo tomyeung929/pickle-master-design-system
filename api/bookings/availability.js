@@ -1,6 +1,6 @@
-import supabase from '../_lib/supabase.js';
-import { json, cors } from '../_lib/auth.js';
-import { statusFromCount, slotCapacity } from '../_lib/pricing.js';
+const supabase = require('../_lib/supabase.js');
+const { json, cors } = require('../_lib/auth.js');
+const { statusFromCount, slotCapacity } = require('../_lib/pricing.js');
 
 const SLOTS = {
   peak:    ['18:00', '19:00', '20:00', '21:00'],
@@ -8,7 +8,7 @@ const SLOTS = {
   class:   ['09:00', '11:00', '14:00', '16:00', '18:00', '19:30'],
 };
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return json(res, 405, { error: 'Method not allowed' });
@@ -18,7 +18,6 @@ export default async function handler(req, res) {
     return json(res, 400, { error: 'court_id, date and session_type are required' });
   }
 
-  // Get session type details
   const { data: st } = await supabase
     .from('session_types')
     .select('id, key, slot_type')
@@ -30,7 +29,6 @@ export default async function handler(req, res) {
   const slots = SLOTS[st.slot_type] || SLOTS.nonpeak;
   const capacity = slotCapacity(st.key);
 
-  // Count confirmed bookings per slot
   const { data: bookings } = await supabase
     .from('bookings')
     .select('slot_time')
@@ -41,7 +39,7 @@ export default async function handler(req, res) {
 
   const counts = {};
   (bookings || []).forEach(b => {
-    const t = b.slot_time.slice(0, 5); // '18:00:00' → '18:00'
+    const t = b.slot_time.slice(0, 5);
     counts[t] = (counts[t] || 0) + 1;
   });
 
@@ -51,4 +49,4 @@ export default async function handler(req, res) {
   }));
 
   return json(res, 200, { slots: result, session_type_id: st.id });
-}
+};

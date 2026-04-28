@@ -1,8 +1,8 @@
-import supabase from './_lib/supabase.js';
-import { parseBody, json, cors } from './_lib/auth.js';
-import { sendContactNotification } from './_lib/resend.js';
+const supabase = require('./_lib/supabase.js');
+const { parseBody, json, cors } = require('./_lib/auth.js');
+const { sendContactNotification } = require('./_lib/resend.js');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
@@ -15,12 +15,10 @@ export default async function handler(req, res) {
     return json(res, 400, { error: 'All fields are required' });
   }
 
-  // Basic email format check
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json(res, 400, { error: 'Invalid email address' });
   }
 
-  // Sanitize: strip HTML tags from message
   const cleanMessage = message.replace(/<[^>]*>/g, '').slice(0, 2000);
 
   await supabase.from('contact_submissions').insert({ name, email, subject, message: cleanMessage });
@@ -32,4 +30,4 @@ export default async function handler(req, res) {
   }
 
   return json(res, 200, { success: true });
-}
+};

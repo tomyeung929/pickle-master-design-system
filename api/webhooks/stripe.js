@@ -1,8 +1,8 @@
-import stripe from '../_lib/stripe.js';
-import supabase from '../_lib/supabase.js';
-import { sendMembershipWelcome } from '../_lib/resend.js';
+const stripe = require('../_lib/stripe.js');
+const supabase = require('../_lib/supabase.js');
+const { sendMembershipWelcome } = require('../_lib/resend.js');
 
-export const config = { api: { bodyParser: false } };
+module.exports.config = { api: { bodyParser: false } };
 
 async function getRawBody(req) {
   return new Promise((resolve, reject) => {
@@ -13,7 +13,7 @@ async function getRawBody(req) {
   });
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const sig = req.headers['stripe-signature'];
@@ -31,7 +31,6 @@ export default async function handler(req, res) {
     switch (event.type) {
       case 'payment_intent.payment_failed': {
         const pi = event.data.object;
-        // Release pending booking slots
         await supabase
           .from('bookings')
           .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
@@ -46,9 +45,8 @@ export default async function handler(req, res) {
       }
 
       case 'checkout.session.completed': {
-        // Membership subscription created via Checkout Session
         const session = event.data.object;
-        if (session.mode === 'subscription' && session.metadata?.user_id) {
+        if (session.mode === 'subscription' && session.metadata && session.metadata.user_id) {
           const { user_id, tier } = session.metadata;
           await supabase.from('profiles').update({ tier }).eq('id', user_id);
           await supabase.from('membership_subscriptions').insert({
@@ -83,9 +81,6 @@ export default async function handler(req, res) {
             .from('membership_subscriptions')
             .update({ status: newStatus, current_period_end: new Date(sub.current_period_end * 1000).toISOString() })
             .eq('stripe_subscription_id', sub.id);
-          if (sub.cancel_at_period_end || sub.status !== 'active') {
-            // Downgrade tier when subscription expires
-          }
         }
         break;
       }
@@ -118,4 +113,4 @@ export default async function handler(req, res) {
   }
 
   res.status(200).json({ received: true });
-}
+};

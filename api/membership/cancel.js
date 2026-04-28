@@ -1,8 +1,8 @@
-import supabase from '../_lib/supabase.js';
-import stripe from '../_lib/stripe.js';
-import { getUser, json, cors } from '../_lib/auth.js';
+const supabase = require('../_lib/supabase.js');
+const stripe = require('../_lib/stripe.js');
+const { getUser, json, cors } = require('../_lib/auth.js');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     .eq('status', 'active')
     .single();
 
-  if (!sub?.stripe_subscription_id) {
+  if (!sub || !sub.stripe_subscription_id) {
     return json(res, 404, { error: 'No active subscription found' });
   }
 
@@ -26,4 +26,4 @@ export default async function handler(req, res) {
   });
 
   return json(res, 200, { success: true, message: 'Subscription will cancel at end of billing period' });
-}
+};

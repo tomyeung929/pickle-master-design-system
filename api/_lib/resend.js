@@ -1,10 +1,10 @@
-import { Resend } from 'resend';
+const { Resend } = require('resend');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 const ADMIN = process.env.ADMIN_EMAIL || 'admin@picklemaster.hk';
 
-export async function sendBookingConfirmation({ to, name, court, sessionType, date, time, price }) {
+async function sendBookingConfirmation({ to, name, court, sessionType, date, time, price }) {
   await resend.emails.send({
     from: FROM,
     to,
@@ -20,14 +20,14 @@ export async function sendBookingConfirmation({ to, name, court, sessionType, da
           <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666">Time</td><td style="padding:8px;border-bottom:1px solid #eee">${time}</td></tr>
           <tr><td style="padding:8px;color:#666">Amount Paid</td><td style="padding:8px">HK$${price}</td></tr>
         </table>
-        <p style="color:#666;font-size:14px">Cancellations must be made at least 24 hours in advance. Address: 8/F Champion Building, 301-309 Nathan Rd, Kowloon.</p>
+        <p style="color:#666;font-size:14px">Cancellations must be made at least 24 hours in advance.</p>
         <p style="color:#C9A84C;font-size:12px;margin-top:24px">Pickle Master 匹匠 · Premier Indoor Pickleball Club · Hong Kong</p>
       </div>
     `,
   });
 }
 
-export async function sendContactNotification({ name, email, subject, message }) {
+async function sendContactNotification({ name, email, subject, message }) {
   await Promise.all([
     resend.emails.send({
       from: FROM,
@@ -45,7 +45,7 @@ export async function sendContactNotification({ name, email, subject, message })
   ]);
 }
 
-export async function sendTournamentConfirmation({ to, name, eventName }) {
+async function sendTournamentConfirmation({ to, name, eventName }) {
   await resend.emails.send({
     from: FROM,
     to,
@@ -54,7 +54,7 @@ export async function sendTournamentConfirmation({ to, name, eventName }) {
   });
 }
 
-export async function sendMembershipWelcome({ to, name, tier }) {
+async function sendMembershipWelcome({ to, name, tier }) {
   await resend.emails.send({
     from: FROM,
     to,
@@ -62,3 +62,5 @@ export async function sendMembershipWelcome({ to, name, tier }) {
     html: `<div style="font-family:sans-serif;color:#1A1208"><h2 style="color:#0F3D24">Welcome, ${name}!</h2><p>Your <b>${tier}</b> membership is now active. You can book courts up to ${tier === 'DINK' ? '14' : '7'} days in advance and enjoy 10% off all court bookings.</p><p style="color:#C9A84C;font-size:12px;margin-top:24px">Pickle Master 匹匠</p></div>`,
   });
 }
+
+module.exports = { sendBookingConfirmation, sendContactNotification, sendTournamentConfirmation, sendMembershipWelcome };

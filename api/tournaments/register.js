@@ -1,8 +1,8 @@
-import supabase from '../_lib/supabase.js';
-import { getUser, parseBody, json, cors } from '../_lib/auth.js';
-import { sendTournamentConfirmation } from '../_lib/resend.js';
+const supabase = require('../_lib/supabase.js');
+const { getUser, parseBody, json, cors } = require('../_lib/auth.js');
+const { sendTournamentConfirmation } = require('../_lib/resend.js');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
@@ -27,12 +27,10 @@ export default async function handler(req, res) {
 
   if (!tournament) return json(res, 404, { error: 'Tournament not found' });
 
-  // Members-only check
   if (tournament.members_only && user.tier === 'guest') {
     return json(res, 403, { error: 'This tournament is for members only' });
   }
 
-  // Capacity check
   if (tournament.capacity) {
     const { count } = await supabase
       .from('tournament_registrations')
@@ -64,4 +62,4 @@ export default async function handler(req, res) {
   }
 
   return json(res, 200, { success: true });
-}
+};

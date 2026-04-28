@@ -1,6 +1,6 @@
-import supabase from './supabase.js';
+const supabase = require('./supabase.js');
 
-export async function getUser(req) {
+async function getUser(req) {
   const authHeader = req.headers['authorization'] || req.headers['Authorization'];
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   const token = authHeader.slice(7);
@@ -14,11 +14,11 @@ export async function getUser(req) {
   return profile || null;
 }
 
-export function json(res, status, body) {
+function json(res, status, body) {
   res.status(status).json(body);
 }
 
-export async function parseBody(req) {
+async function parseBody(req) {
   if (req.body) return req.body;
   return new Promise((resolve, reject) => {
     let data = '';
@@ -28,8 +28,10 @@ export async function parseBody(req) {
   });
 }
 
-export function cors(res) {
+function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
+
+module.exports = { getUser, json, parseBody, cors };

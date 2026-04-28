@@ -1,7 +1,7 @@
-import supabase from '../_lib/supabase.js';
-import { parseBody, json, cors } from '../_lib/auth.js';
+const supabase = require('../_lib/supabase.js');
+const { parseBody, json, cors } = require('../_lib/auth.js');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
@@ -22,11 +22,10 @@ export default async function handler(req, res) {
   if (error) return json(res, 400, { error: error.message });
   if (!data.user) return json(res, 400, { error: 'Registration failed' });
 
-  // Ensure profile row exists (trigger may take a moment)
   await supabase.from('profiles').upsert({ id: data.user.id, name, email }, { onConflict: 'id' });
 
   return json(res, 200, {
     user: { id: data.user.id, name, email, tier: 'guest' },
     session: { access_token: data.session?.access_token || null },
   });
-}
+};

@@ -1,9 +1,9 @@
-import supabase from '../_lib/supabase.js';
-import stripe from '../_lib/stripe.js';
-import { getUser, parseBody, json, cors } from '../_lib/auth.js';
-import { applyMemberPricing, isWithinBookingWindow, statusFromCount, slotCapacity } from '../_lib/pricing.js';
+const supabase = require('../_lib/supabase.js');
+const stripe = require('../_lib/stripe.js');
+const { getUser, parseBody, json, cors } = require('../_lib/auth.js');
+const { applyMemberPricing, isWithinBookingWindow, statusFromCount, slotCapacity } = require('../_lib/pricing.js');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
@@ -11,14 +11,14 @@ export default async function handler(req, res) {
   let body;
   try { body = await parseBody(req); } catch { return json(res, 400, { error: 'Invalid JSON' }); }
 
-  const user = await getUser(req); // may be null for guest checkout
-  const tier = user?.tier || 'guest';
+  const user = await getUser(req);
+  const tier = user ? user.tier || 'guest' : 'guest';
   const { cart, guest_name, guest_email } = body;
 
   if (!cart || cart.length === 0) return json(res, 400, { error: 'Cart is empty' });
 
-  const guestName  = user?.name  || guest_name  || 'Guest';
-  const guestEmail = user?.email || guest_email || null;
+  const guestName  = user ? user.name  : (guest_name  || 'Guest');
+  const guestEmail = user ? user.email : (guest_email || null);
 
   let totalHkd = 0;
   const pendingBookings = [];
@@ -26,7 +26,6 @@ export default async function handler(req, res) {
 
   for (const item of cart) {
     if (item.type === 'booking' || (!item.type && item.sessionType)) {
-      // Court booking item
       const { data: st } = await supabase
         .from('session_types')
         .select('id, key, price_guest, price_member, slot_type')
@@ -35,12 +34,10 @@ export default async function handler(req, res) {
 
       if (!st) return json(res, 400, { error: `Unknown session type: ${item.sessionType}` });
 
-      // Booking window check
       if (!isWithinBookingWindow(item.date, tier, st.slot_type)) {
-        return json(res, 400, { error: `Booking window exceeded for your membership tier` });
+        return json(res, 400, { error: 'Booking window exceeded for your membership tier' });
       }
 
-      // Double-booking check
       const { data: existing } = await supabase
         .from('bookings')
         .select('id')
@@ -60,7 +57,6 @@ export default async function handler(req, res) {
       pendingBookings.push({ st, item, price });
 
     } else if (item.type === 'product' || item.product_id) {
-      // Shop product item
       const pid = item.product_id || item.id;
       const { data: product } = await supabase
         .from('products')
@@ -72,12 +68,11 @@ export default async function handler(req, res) {
         return json(res, 400, { error: `Product ${pid} is unavailable` });
       }
 
-      const qty = item.qty || item.quantity || 1;
+      const qty = item.qty || 1;
       const price = tier !== 'guest' ? product.member_price : product.price;
       totalHkd += price * qty;
       pendingOrderItems.push({ product, qty, price });
     } else {
-      // Generic cart item (social play, etc.)
       totalHkd += item.price || 0;
       pendingOrderItems.push({ name: item.name, detail: item.detail, qty: 1, price: item.price || 0 });
     }
@@ -85,20 +80,18 @@ export default async function handler(req, res) {
 
   if (totalHkd === 0) return json(res, 400, { error: 'Total is zero' });
 
-  // Create Stripe PaymentIntent
   const paymentIntent = await stripe.paymentIntents.create({
-    amount: totalHkd * 100, // HKD in cents (Stripe uses smallest currency unit)
+    amount: totalHkd * 100,
     currency: 'hkd',
     metadata: {
-      user_id: user?.id || 'guest',
+      user_id: user ? user.id : 'guest',
       guest_email: guestEmail || '',
     },
   });
 
-  // Insert pending booking rows
   for (const { st, item, price } of pendingBookings) {
     await supabase.from('bookings').insert({
-      user_id: user?.id || null,
+      user_id: user ? user.id : null,
       guest_name: guestName,
       guest_email: guestEmail,
       court_id: item.courtId,
@@ -111,12 +104,11 @@ export default async function handler(req, res) {
     });
   }
 
-  // Insert pending order + items if any products
   if (pendingOrderItems.length > 0) {
     const { data: order } = await supabase
       .from('orders')
       .insert({
-        user_id: user?.id || null,
+        user_id: user ? user.id : null,
         guest_name: guestName,
         guest_email: guestEmail,
         status: 'pending',
@@ -131,8 +123,8 @@ export default async function handler(req, res) {
         await supabase.from('order_items').insert({
           order_id: order.id,
           item_type: 'product',
-          product_id: item.product?.id || null,
-          name: item.product?.name_en || item.name || '',
+          product_id: item.product ? item.product.id : null,
+          name: item.product ? item.product.name_en : (item.name || ''),
           detail: item.detail || '',
           quantity: item.qty || 1,
           unit_price: item.price,
@@ -145,4 +137,4 @@ export default async function handler(req, res) {
     client_secret: paymentIntent.client_secret,
     total_hkd: totalHkd,
   });
-}
+};
