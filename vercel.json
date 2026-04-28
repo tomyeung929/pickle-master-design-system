@@ -2,8 +2,7 @@
   "rewrites": [
     { "source": "/", "destination": "/website/index-light.html" },
     { "source": "/dark", "destination": "/website/index.html" },
-    { "source": "/api/:path*", "destination": "/api/:path*" },
-    { "source": "/:path+", "destination": "/website/:path+" }
+    { "source": "/:path+", "destination": "/website/:path+", "check": true }
   ],
   "functions": {
     "api/**/*.js": {
