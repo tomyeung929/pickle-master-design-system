@@ -258,7 +258,7 @@ function LoginPage({ lang, setUser, setPage }) {
     <div style={{ background:'#FDFAF5', minHeight:'80vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'48px 24px' }}>
       <div style={{ width:'100%', maxWidth:440 }}>
         <div style={{ textAlign:'center', marginBottom:32 }}>
-          <img src="../assets/logo.jpg" alt="PM" style={{ width:64, height:64, borderRadius:'50%', objectFit:'cover', border:'2px solid #C9A84C', marginBottom:16 }}/>
+          <img src="/assets/logo.jpg" alt="PM" style={{ width:64, height:64, borderRadius:'50%', objectFit:'cover', border:'2px solid #C9A84C', marginBottom:16 }}/>
           <div style={{ fontFamily:"'Playfair Display SC',serif", fontSize:24, fontWeight:700, color:'#0F3D24' }}>{mode==='login'?t.login_title:t.register_title}</div>
         </div>
         <div style={{ background:'#FFFFFF', borderRadius:16, boxShadow:'0 8px 32px rgba(26,18,8,0.1)', border:'1px solid #EDE8DF', overflow:'hidden' }}>

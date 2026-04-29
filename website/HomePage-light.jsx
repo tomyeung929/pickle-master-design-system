@@ -158,7 +158,7 @@ function HomePage({ lang, setPage, addToCart }) {
             <img src="../assets/Court_layout.jpeg" alt="Pickle Master Court Layout" loading="lazy"
               style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', bottom: 14, right: 14, background: 'rgba(15,61,36,0.88)', borderRadius: 8, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8, backdropFilter: 'blur(4px)' }}>
-              <img src="../assets/logo.jpg" alt="PM" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #C9A84C' }} />
+              <img src="/assets/logo.jpg" alt="PM" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #C9A84C' }} />
               <span style={{ fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C9A84C' }}>Pickle Master HK</span>
             </div>
           </div>

@@ -75,7 +75,7 @@ function Nav({ page, setPage, lang, setLang, user, setUser, cart, setCartOpen, m
 
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', flexShrink: 0 }} onClick={() => setPage('home')}>
-            <img src="../assets/logo.jpg" alt="PM" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #C9A84C' }} />
+            <img src="/assets/logo.jpg" alt="PM" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #C9A84C' }} />
             <div>
               <div style={{ fontFamily: "'Playfair Display SC',serif", fontSize: 15, fontWeight: 700, color: '#0F3D24', lineHeight: 1 }}>Pickle Master</div>
               <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#C9A84C', marginTop: 1 }}>匹匠 · Hong Kong</div>
@@ -170,7 +170,7 @@ function Footer({ setPage, lang }) {
         {/* Brand */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <img src="../assets/logo.jpg" alt="PM" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #C9A84C' }} />
+            <img src="/assets/logo.jpg" alt="PM" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #C9A84C' }} />
             <div style={{ fontFamily: "'Playfair Display SC',serif", fontSize: 14, fontWeight: 700, color: '#0F3D24' }}>Pickle Master</div>
           </div>
           <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: '#6B5D4E', lineHeight: 1.7, maxWidth: 220 }}>{t.footer_about}</p>
