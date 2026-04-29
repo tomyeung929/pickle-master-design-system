@@ -12,32 +12,49 @@ module.exports = async function handler(req, res) {
   const { email, password } = body;
   if (!email || !password) return json(res, 400, { error: 'email and password are required' });
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return json(res, 401, { error: 'Invalid email or password' });
+  // Call Supabase Auth REST API directly — avoids mutating the shared service-role
+  // client's internal session (which would cause subsequent DB queries to run as the
+  // user with RLS instead of as service role, silently returning null profiles).
+  const authRes = await fetch(
+    `${process.env.SUPABASE_URL}/auth/v1/token?grant_type=password`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
+      },
+      body: JSON.stringify({ email, password }),
+    }
+  );
+  const authData = await authRes.json();
+  if (authData.error || !authData.access_token) {
+    return json(res, 401, { error: 'Invalid email or password' });
+  }
 
+  const userId = authData.user.id;
+
+  // Service-role client is uncontaminated — reads bypass RLS correctly
   let { data: profile } = await supabase
     .from('profiles')
     .select('id, name, email, tier, is_admin')
-    .eq('id', data.user.id)
+    .eq('id', userId)
     .single();
 
   if (!profile) {
-    // Insert if missing — ignoreDuplicates so we never overwrite is_admin
     await supabase
       .from('profiles')
-      .upsert({ id: data.user.id, name: email, email, tier: 'guest' }, { onConflict: 'id', ignoreDuplicates: true });
+      .upsert({ id: userId, name: email, email, tier: 'guest' }, { onConflict: 'id', ignoreDuplicates: true });
 
-    // Always re-fetch: ignoreDuplicates returns null on conflict, so we can't trust the upsert result
     const { data: refetched } = await supabase
       .from('profiles')
       .select('id, name, email, tier, is_admin')
-      .eq('id', data.user.id)
+      .eq('id', userId)
       .single();
     profile = refetched;
   }
 
   return json(res, 200, {
-    user: profile || { id: data.user.id, name: email, email, tier: 'guest', is_admin: false },
-    session: { access_token: data.session.access_token },
+    user: profile || { id: userId, name: email, email, tier: 'guest', is_admin: false },
+    session: { access_token: authData.access_token },
   });
 };
