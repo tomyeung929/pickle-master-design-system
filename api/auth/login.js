@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
   if (!profile) {
     const { data: upserted } = await supabase
       .from('profiles')
-      .upsert({ id: data.user.id, name: email, email, tier: 'guest', is_admin: false }, { onConflict: 'id' })
+      .upsert({ id: data.user.id, name: email, email, tier: 'guest' }, { onConflict: 'id', ignoreDuplicates: true })
       .select('id, name, email, tier, is_admin')
       .single();
     profile = upserted;
