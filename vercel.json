@@ -1,8 +1,6 @@
 {
-  "rewrites": [
-    { "source": "/", "destination": "/website/index-light.html" },
-    { "source": "/dark", "destination": "/website/index.html" },
-    { "source": "/:path+", "destination": "/website/:path+", "check": true }
+  "redirects": [
+    { "source": "/dark", "destination": "/website/index.html", "permanent": false }
   ],
   "functions": {
     "api/**/*.js": {
