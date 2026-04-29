@@ -15,14 +15,23 @@ module.exports = async function handler(req, res) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return json(res, 401, { error: 'Invalid email or password' });
 
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from('profiles')
     .select('id, name, email, tier, is_admin')
     .eq('id', data.user.id)
     .single();
 
+  if (!profile) {
+    const { data: upserted } = await supabase
+      .from('profiles')
+      .upsert({ id: data.user.id, name: email, email, tier: 'guest', is_admin: false }, { onConflict: 'id' })
+      .select('id, name, email, tier, is_admin')
+      .single();
+    profile = upserted;
+  }
+
   return json(res, 200, {
-    user: profile || { id: data.user.id, name: email, email, tier: 'guest' },
+    user: profile || { id: data.user.id, name: email, email, tier: 'guest', is_admin: false },
     session: { access_token: data.session.access_token },
   });
 };
