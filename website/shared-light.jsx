@@ -2,6 +2,18 @@
 
 const { useState, useEffect, useRef } = React;
 
+// ─── Site content cache (shared across components) ────────────────────────────
+window.PM_CONTENT = window.PM_CONTENT || {};
+window._pmContentPromise = null;
+window.fetchSiteContent = function() {
+  if (window._pmContentPromise) return window._pmContentPromise;
+  window._pmContentPromise = fetch('/api/content')
+    .then(r => r.json())
+    .then(d => { Object.assign(window.PM_CONTENT, d); return d; })
+    .catch(() => ({}));
+  return window._pmContentPromise;
+};
+
 // ─── ICONS ───────────────────────────────────────────────────
 function IconCart({ n }) {
   return (
@@ -168,6 +180,13 @@ function Nav({ page, setPage, lang, setLang, user, setUser, cart, setCartOpen, m
 // ─── FOOTER (LIGHT) ──────────────────────────────────────────
 function Footer({ setPage, lang }) {
   const t = window.LANG[lang];
+  const [contactInfo, setContactInfo] = useState(window.PM_CONTENT.contact_info || null);
+  useEffect(() => {
+    window.fetchSiteContent().then(d => { if (d.contact_info) setContactInfo(d.contact_info); });
+  }, []);
+  const address = contactInfo
+    ? (lang === 'EN' ? contactInfo.address_en : contactInfo.address_zh) || t.home_address_val
+    : t.home_address_val;
   return (
     <footer style={{ background: '#F0EAE0', borderTop: '1px solid #DDD5C8', paddingTop: 48 }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 48px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 40 }}>
@@ -201,7 +220,7 @@ function Footer({ setPage, lang }) {
         {/* Address */}
         <div>
           <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#0F3D24', marginBottom: 16 }}>{t.home_address}</div>
-          <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: '#6B5D4E', lineHeight: 1.7 }}>{t.home_address_val}</div>
+          <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: '#6B5D4E', lineHeight: 1.7 }}>{address}</div>
           <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#0F3D24', marginBottom: 8, marginTop: 20 }}>{t.footer_payment}</div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {['Visa','MC','Amex','ApplePay','UnionPay'].map(p => (

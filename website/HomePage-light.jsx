@@ -1,29 +1,21 @@
 // Pickle Master — Home Page (Light Theme + Media)
 
 function HomePage({ lang, setPage, addToCart }) {
+  const { useState, useEffect } = React;
   const t = window.LANG[lang];
 
-  // Asian/HK faces playing pickleball — swap with real club photos for production
-  const testimonials = [
-    {
-      quote: lang === 'EN' ? "Pickleball has completely transformed my weekends. Easy to learn, fun, and a great way to meet new people." : "匹克球完全改變了我的週末！容易上手，又好玩，仲識到好多新朋友！",
-      name: 'Jeffrey', detail: '32, DUPR 3.5',
-      // HK male portrait
-      avatar: 'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=200',
-    },
-    {
-      quote: lang === 'EN' ? "I love how inclusive pickleball is! Everyone can join and have a good time. My go-to for staying active." : "我非常喜歡打Pickleball！這項運動簡單易學，不管年齡大小都能參與。",
-      name: 'Angel', detail: '34, Parent',
-      // HK female portrait
-      avatar: 'https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=200',
-    },
-    {
-      quote: lang === 'EN' ? "Pickle Master is where serious players and total beginners come together. The coaching is world class." : "匹匠讓認真的球員和初學者走在一起。教練質素一流。",
-      name: 'Ken', detail: '43, Designer',
-      // HK male portrait
-      avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=200',
-    },
+  const defaultTestimonials = [
+    { quote_en: "Pickleball has completely transformed my weekends. Easy to learn, fun, and a great way to meet new people.", quote_zh: "匹克球完全改變了我的週末！容易上手，又好玩，仲識到好多新朋友！", name: 'Jeffrey', detail: '32, DUPR 3.5', avatar: 'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=200' },
+    { quote_en: "I love how inclusive pickleball is! Everyone can join and have a good time. My go-to for staying active.", quote_zh: "我非常喜歡打Pickleball！這項運動簡單易學，不管年齡大小都能參與。", name: 'Angel', detail: '34, Parent', avatar: 'https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=200' },
+    { quote_en: "Pickle Master is where serious players and total beginners come together. The coaching is world class.", quote_zh: "匹匠讓認真的球員和初學者走在一起。教練質素一流。", name: 'Ken', detail: '43, Designer', avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=200' },
   ];
+
+  const [rawTestimonials, setRawTestimonials] = useState(defaultTestimonials);
+  useEffect(() => {
+    window.fetchSiteContent().then(d => { if (d.testimonials) setRawTestimonials(d.testimonials); });
+  }, []);
+
+  const testimonials = rawTestimonials.map(item => ({ ...item, quote: lang === 'EN' ? item.quote_en : item.quote_zh }));
 
   const rules = [
     { title: t.home_rule1_title, body: t.home_rule1 },
@@ -193,7 +185,7 @@ function HomePage({ lang, setPage, addToCart }) {
           <div style={{ width: 40, height: 3, background: '#C9A84C', borderRadius: 2, margin: '0 auto 28px' }} />
           <div style={{ fontFamily: "'Playfair Display SC',serif", fontSize: 'clamp(24px,4vw,36px)', fontWeight: 700, color: '#0F3D24', marginBottom: 24 }}>{t.home_about_title}</div>
           <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 16, color: '#4A3B2C', lineHeight: 1.9, marginBottom: 32 }}>{t.home_about}</p>
-          <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9E8E78' }}>{t.home_address} · {t.home_address_val}</div>
+          <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9E8E78' }}>{t.home_address} · {(window.PM_CONTENT.contact_info && (lang === 'EN' ? window.PM_CONTENT.contact_info.address_en : window.PM_CONTENT.contact_info.address_zh)) || t.home_address_val}</div>
           <div style={{ fontFamily: "'Playfair Display SC',serif", fontSize: 22, fontWeight: 700, color: '#C9A84C', marginTop: 32, letterSpacing: '0.05em' }}>{t.home_tagline}</div>
         </div>
       </section>

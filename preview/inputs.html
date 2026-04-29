@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--color-cream); padding: 24px; display: flex; flex-direction: column; gap: 14px; max-width: 420px; }
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  .field-label { font-family: var(--font-label); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-pebble); }
+  input, select { font-family: var(--font-sans); font-size: 14px; color: var(--color-ink); background: var(--color-white); border: 1.5px solid var(--color-stone); border-radius: var(--radius-sm); padding: 11px 14px; width: 100%; outline: none; appearance: none; }
+  input:focus { border-color: var(--color-forest); box-shadow: 0 0 0 3px rgba(28,79,58,0.1); }
+  input.error { border-color: #b94a3b; }
+  .error-msg { font-family: var(--font-sans); font-size: 11px; color: #b94a3b; }
+  .input-hint { font-family: var(--font-sans); font-size: 11px; color: var(--color-pebble); }
+</style></head><body>
+  <div class="field-group">
+    <div class="field-label">Full Name</div>
+    <input type="text" placeholder="e.g. Wing-Sze Lam" value="">
+  </div>
+  <div class="field-group">
+    <div class="field-label">Email Address</div>
+    <input type="email" placeholder="you@example.com" value="member@picklemaster.hk" style="border-color:var(--color-forest);">
+  </div>
+  <div class="field-group">
+    <div class="field-label">Preferred Court</div>
+    <select><option>Court 1 — Open Play</option><option>Court 2 — Advanced</option></select>
+  </div>
+  <div class="field-group">
+    <div class="field-label">Member ID</div>
+    <input type="text" class="error" placeholder="PM-0000" value="PM-???">
+    <div class="error-msg">Member ID not found. Please check your details.</div>
+  </div>
+  <div class="field-group">
+    <div class="field-label">Session Date</div>
+    <input type="date" value="2026-05-01">
+    <div class="input-hint">Members may book up to 7 days in advance.</div>
+  </div>
+</body></html>

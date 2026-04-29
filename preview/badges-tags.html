@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--color-cream); padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .label { font-family: var(--font-label); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-pebble); margin-bottom: 10px; }
+  .badge { font-family: var(--font-label); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; padding: 5px 12px; border-radius: var(--radius-pill); display: inline-block; }
+  .badge-gold { background: var(--color-gold); color: var(--color-forest-deep); }
+  .badge-forest { background: var(--color-forest-deep); color: var(--color-gold); }
+  .badge-sage { background: var(--color-court-sage); color: var(--color-white); }
+  .badge-outline { background: transparent; border: 1px solid var(--color-forest); color: var(--color-forest); }
+  .badge-tan { background: var(--color-court-tan); color: var(--color-forest-deep); }
+  .tag { font-family: var(--font-label); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 10px; border-radius: var(--radius-sm); background: var(--color-stone); color: var(--color-forest); display: inline-block; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  .status { display: flex; align-items: center; font-family: var(--font-sans); font-size: 12px; color: var(--color-forest); }
+</style></head><body>
+  <div>
+    <div class="label">Membership Badges</div>
+    <div class="row">
+      <span class="badge badge-gold">Member</span>
+      <span class="badge badge-forest">Pro</span>
+      <span class="badge badge-sage">Open Play</span>
+      <span class="badge badge-outline">Guest</span>
+    </div>
+  </div>
+  <div>
+    <div class="label">Court Tags</div>
+    <div class="row">
+      <span class="tag">Court 1</span>
+      <span class="tag">Court 2</span>
+      <span class="tag">Advanced</span>
+      <span class="tag">Beginner</span>
+      <span class="tag">Mixed</span>
+    </div>
+  </div>
+  <div>
+    <div class="label">Status Indicators</div>
+    <div class="row">
+      <span class="status"><span class="dot" style="background:#5E8474;"></span>Available</span>
+      <span class="status" style="margin-left:16px;"><span class="dot" style="background:#C9A84C;"></span>Limited</span>
+      <span class="status" style="margin-left:16px;"><span class="dot" style="background:#9E8E78;"></span>Full</span>
+    </div>
+  </div>
+</body></html>

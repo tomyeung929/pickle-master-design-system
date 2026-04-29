@@ -140,11 +140,13 @@ function PrivatePage({ lang, setPage }) {
 // ─── CONTACT PAGE ─────────────────────────────────────────────
 function ContactPage({ lang }) {
   const t = window.LANG[lang];
-  const { useState } = React;
+  const { useState, useEffect } = React;
   const [form, setForm] = useState({ name:'', email:'', subject:'', message:'' });
   const [sent, setSent]     = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError]   = useState(null);
+  const [siteContent, setSiteContent] = useState(window.PM_CONTENT || {});
+  useEffect(() => { window.fetchSiteContent().then(d => setSiteContent({ ...window.PM_CONTENT, ...d })); }, []);
 
   async function submit(e) {
     e.preventDefault();
@@ -206,15 +208,24 @@ function ContactPage({ lang }) {
           )}
         </div>
         <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
-          {[
-            { label:t.contact_address_title, value:t.contact_address },
-            { label:t.contact_hours_title, value:t.contact_hours },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ background:'#FFFFFF', borderRadius:12, padding:'24px', boxShadow:'0 2px 10px rgba(26,18,8,0.06)', border:'1px solid #EDE8DF' }}>
-              <div style={{ fontFamily:"'Oswald',sans-serif", fontSize:10, letterSpacing:'0.15em', textTransform:'uppercase', color:'#C9A84C', marginBottom:10 }}>{label}</div>
-              <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:14, color:'#1A1208', lineHeight:1.8, whiteSpace:'pre-line' }}>{value}</div>
+          <div style={{ background:'#FFFFFF', borderRadius:12, padding:'24px', boxShadow:'0 2px 10px rgba(26,18,8,0.06)', border:'1px solid #EDE8DF' }}>
+            <div style={{ fontFamily:"'Oswald',sans-serif", fontSize:10, letterSpacing:'0.15em', textTransform:'uppercase', color:'#C9A84C', marginBottom:10 }}>{t.contact_address_title}</div>
+            <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:14, color:'#1A1208', lineHeight:1.8 }}>
+              {(siteContent.contact_info && (lang === 'EN' ? siteContent.contact_info.address_en : siteContent.contact_info.address_zh)) || t.contact_address}
             </div>
-          ))}
+          </div>
+          <div style={{ background:'#FFFFFF', borderRadius:12, padding:'24px', boxShadow:'0 2px 10px rgba(26,18,8,0.06)', border:'1px solid #EDE8DF' }}>
+            <div style={{ fontFamily:"'Oswald',sans-serif", fontSize:10, letterSpacing:'0.15em', textTransform:'uppercase', color:'#C9A84C', marginBottom:10 }}>{t.contact_hours_title}</div>
+            {siteContent.opening_hours ? (
+              <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:14, color:'#1A1208', lineHeight:1.8 }}>
+                {siteContent.opening_hours.map((row, i) => (
+                  <div key={i}><strong>{lang === 'EN' ? row.day_en : row.day_zh}</strong> — {lang === 'EN' ? row.hours_en : row.hours_zh}</div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:14, color:'#1A1208', lineHeight:1.8, whiteSpace:'pre-line' }}>{t.contact_hours}</div>
+            )}
+          </div>
           <div style={{ background:'#0F3D24', borderRadius:12, padding:'24px' }}>
             <div style={{ fontFamily:"'Oswald',sans-serif", fontSize:10, letterSpacing:'0.15em', textTransform:'uppercase', color:'#C9A84C', marginBottom:12 }}>{t.contact_follow}</div>
             <div style={{ display:'flex', gap:12 }}>

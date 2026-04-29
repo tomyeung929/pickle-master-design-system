@@ -22,12 +22,18 @@ module.exports = async function handler(req, res) {
     .single();
 
   if (!profile) {
-    const { data: upserted } = await supabase
+    // Insert if missing — ignoreDuplicates so we never overwrite is_admin
+    await supabase
       .from('profiles')
-      .upsert({ id: data.user.id, name: email, email, tier: 'guest' }, { onConflict: 'id', ignoreDuplicates: true })
+      .upsert({ id: data.user.id, name: email, email, tier: 'guest' }, { onConflict: 'id', ignoreDuplicates: true });
+
+    // Always re-fetch: ignoreDuplicates returns null on conflict, so we can't trust the upsert result
+    const { data: refetched } = await supabase
+      .from('profiles')
       .select('id, name, email, tier, is_admin')
+      .eq('id', data.user.id)
       .single();
-    profile = upserted;
+    profile = refetched;
   }
 
   return json(res, 200, {

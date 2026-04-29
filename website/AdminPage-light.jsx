@@ -517,6 +517,498 @@ function UsersTab() {
   );
 }
 
+// ─── Content Tab ─────────────────────────────────────────────────────────────
+function ContentTab() {
+  const { useState, useEffect, useCallback } = React;
+  const [sub, setSub] = useState('contact');
+  const [data, setData] = useState({});
+  const [msg, setMsg] = useState('');
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    window.API.get('/api/admin/content').then(r => {
+      if (r.content) {
+        const map = {};
+        r.content.forEach(row => { map[row.key] = row.value; });
+        setData(map);
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  async function save(key, value) {
+    setErr(''); setMsg('');
+    const r = await window.API.post('/api/admin/content', { key, value });
+    if (r.error) { setErr(r.error); return false; }
+    setData(d => ({ ...d, [key]: value }));
+    setMsg('Saved'); setTimeout(() => setMsg(''), 2500);
+    return true;
+  }
+
+  const subTabs = [
+    { key: 'contact', label: 'Contact & Hours' },
+    { key: 'coaches', label: 'Coaches' },
+    { key: 'faqs',    label: 'FAQs' },
+    { key: 'testimonials', label: 'Testimonials' },
+  ];
+
+  if (loading) return <div style={{ color: '#9A8A6A', padding: 24 }}>Loading content…</div>;
+
+  return (
+    <div>
+      {err && <div style={S.err}>{err}</div>}
+      {msg && <div style={S.ok}>{msg}</div>}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '1px solid #E8DFD0', paddingBottom: 0 }}>
+        {subTabs.map(t => (
+          <button key={t.key} style={{ ...S.tab(sub === t.key), fontSize: 13 }} onClick={() => setSub(t.key)}>{t.label}</button>
+        ))}
+      </div>
+
+      {sub === 'contact'      && <ContactHoursEditor data={data} save={save} />}
+      {sub === 'coaches'      && <CoachesEditor data={data} save={save} />}
+      {sub === 'faqs'         && <FAQsEditor data={data} save={save} />}
+      {sub === 'testimonials' && <TestimonialsEditor data={data} save={save} />}
+    </div>
+  );
+}
+
+// ─── Contact & Hours Editor ───────────────────────────────────────────────────
+function ContactHoursEditor({ data, save }) {
+  const { useState } = React;
+  const defaultContact = { address_en: '', address_zh: '', phone: '', email: '', instagram: '#', facebook: '#', map_url: '' };
+  const defaultHours = [
+    { day_en: 'Monday – Friday', day_zh: '週一至五', hours_en: '10:00 am – 10:00 pm', hours_zh: '上午10時 – 晚上10時' },
+    { day_en: 'Saturday', day_zh: '週六', hours_en: '8:00 am – 10:00 pm', hours_zh: '上午8時 – 晚上10時' },
+    { day_en: 'Sunday & Public Holidays', day_zh: '週日及公眾假期', hours_en: '8:00 am – 10:00 pm', hours_zh: '上午8時 – 晚上10時' },
+  ];
+
+  const [contact, setContact] = useState(data.contact_info || defaultContact);
+  const [hours, setHours] = useState(data.opening_hours || defaultHours);
+
+  const contactFields = [
+    ['address_en', 'Address (English)'],
+    ['address_zh', 'Address (Chinese)'],
+    ['phone', 'Phone'],
+    ['email', 'Email'],
+    ['instagram', 'Instagram URL'],
+    ['facebook', 'Facebook URL'],
+    ['map_url', 'Google Maps Embed URL'],
+  ];
+
+  function updateHour(i, field, val) {
+    setHours(hs => hs.map((h, idx) => idx === i ? { ...h, [field]: val } : h));
+  }
+
+  function addHourRow() {
+    setHours(hs => [...hs, { day_en: '', day_zh: '', hours_en: '', hours_zh: '' }]);
+  }
+
+  function removeHourRow(i) {
+    setHours(hs => hs.filter((_, idx) => idx !== i));
+  }
+
+  return (
+    <div>
+      <div style={S.card}>
+        <div style={{ fontWeight: 600, marginBottom: 16, color: '#1A1208' }}>Contact Information</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {contactFields.map(([k, l]) => (
+            <div key={k} style={k === 'map_url' ? { gridColumn: '1 / -1' } : {}}>
+              <div style={S.label}>{l}</div>
+              <input style={S.input} value={contact[k] || ''} onChange={e => setContact(c => ({ ...c, [k]: e.target.value }))} />
+            </div>
+          ))}
+        </div>
+        <button style={{ ...S.btn('gold'), marginTop: 16 }} onClick={() => save('contact_info', contact)}>Save Contact Info</button>
+      </div>
+
+      <div style={S.card}>
+        <div style={{ fontWeight: 600, marginBottom: 16, color: '#1A1208' }}>Opening Hours</div>
+        <table style={S.table}>
+          <thead>
+            <tr>{['Day (EN)', 'Day (ZH)', 'Hours (EN)', 'Hours (ZH)', ''].map(h => <th key={h} style={S.th}>{h}</th>)}</tr>
+          </thead>
+          <tbody>
+            {hours.map((h, i) => (
+              <tr key={i}>
+                {['day_en', 'day_zh', 'hours_en', 'hours_zh'].map(f => (
+                  <td key={f} style={S.td}>
+                    <input style={S.input} value={h[f] || ''} onChange={e => updateHour(i, f, e.target.value)} />
+                  </td>
+                ))}
+                <td style={S.td}>
+                  <button style={S.btn('red')} onClick={() => removeHourRow(i)}>✕</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          <button style={S.btn('ghost')} onClick={addHourRow}>+ Add Row</button>
+          <button style={S.btn('gold')} onClick={() => save('opening_hours', hours)}>Save Hours</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Coaches Editor ───────────────────────────────────────────────────────────
+function CoachesEditor({ data, save }) {
+  const { useState } = React;
+  const blank = { num: '', name: '', role_en: '', role_zh: '', cert: '', bio_en: '', bio_zh: '', spec_en: '', spec_zh: '', photo: '' };
+  const [coaches, setCoaches] = useState(data.coaches || []);
+  const [editing, setEditing] = useState(null);
+  const [draft, setDraft] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [newC, setNewC] = useState(blank);
+
+  function startEdit(i) { setEditing(i); setDraft({ ...coaches[i] }); }
+  function cancelEdit() { setEditing(null); setDraft(null); }
+
+  async function saveEdit(i) {
+    const updated = coaches.map((c, idx) => idx === i ? draft : c);
+    const ok = await save('coaches', updated);
+    if (ok) { setCoaches(updated); setEditing(null); setDraft(null); }
+  }
+
+  async function deleteCoach(i) {
+    if (!confirm('Delete this coach?')) return;
+    const updated = coaches.filter((_, idx) => idx !== i);
+    const ok = await save('coaches', updated);
+    if (ok) setCoaches(updated);
+  }
+
+  async function addCoach() {
+    if (!newC.name.trim()) return;
+    const updated = [...coaches, newC];
+    const ok = await save('coaches', updated);
+    if (ok) { setCoaches(updated); setAdding(false); setNewC(blank); }
+  }
+
+  function moveCoach(i, dir) {
+    const updated = [...coaches];
+    const j = i + dir;
+    if (j < 0 || j >= updated.length) return;
+    [updated[i], updated[j]] = [updated[j], updated[i]];
+    setCoaches(updated);
+    save('coaches', updated);
+  }
+
+  const textareaStyle = { ...S.input, height: 72, resize: 'vertical', fontFamily: "'DM Sans', sans-serif" };
+  const coachFields = [
+    ['num', 'Number (e.g. 01)', 'text', false],
+    ['name', 'Name', 'text', false],
+    ['cert', 'Certification', 'text', false],
+    ['photo', 'Photo URL', 'text', false],
+    ['role_en', 'Role (EN)', 'text', false],
+    ['role_zh', 'Role (ZH)', 'text', false],
+    ['spec_en', 'Specialty (EN)', 'text', false],
+    ['spec_zh', 'Specialty (ZH)', 'text', false],
+    ['bio_en', 'Bio (English)', 'textarea', true],
+    ['bio_zh', 'Bio (Chinese)', 'textarea', true],
+  ];
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <span style={{ fontSize: 14, color: '#7A6A4A' }}>{coaches.length} coaches</span>
+        <button style={S.btn('gold')} onClick={() => { setAdding(true); setEditing(null); }}>+ Add Coach</button>
+      </div>
+
+      {adding && (
+        <div style={{ ...S.card, borderColor: '#C9A84C' }}>
+          <div style={{ fontWeight: 600, marginBottom: 12 }}>New Coach</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            {coachFields.map(([k, l, t, full]) => (
+              <div key={k} style={full ? { gridColumn: '1 / -1' } : {}}>
+                <div style={S.label}>{l}</div>
+                {t === 'textarea'
+                  ? <textarea style={textareaStyle} value={newC[k]} onChange={e => setNewC(c => ({ ...c, [k]: e.target.value }))} />
+                  : <input style={S.input} value={newC[k]} onChange={e => setNewC(c => ({ ...c, [k]: e.target.value }))} />
+                }
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={S.btn('gold')} onClick={addCoach}>Add Coach</button>
+            <button style={S.btn('ghost')} onClick={() => { setAdding(false); setNewC(blank); }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {coaches.map((c, i) => (
+        <div key={i} style={S.card}>
+          {editing === i ? (
+            <div>
+              <div style={{ fontWeight: 600, marginBottom: 12 }}>Editing: {c.name}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                {coachFields.map(([k, l, t, full]) => (
+                  <div key={k} style={full ? { gridColumn: '1 / -1' } : {}}>
+                    <div style={S.label}>{l}</div>
+                    {t === 'textarea'
+                      ? <textarea style={textareaStyle} value={draft[k] || ''} onChange={e => setDraft(d => ({ ...d, [k]: e.target.value }))} />
+                      : <input style={S.input} value={draft[k] || ''} onChange={e => setDraft(d => ({ ...d, [k]: e.target.value }))} />
+                    }
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button style={S.btn('gold')} onClick={() => saveEdit(i)}>Save</button>
+                <button style={S.btn('ghost')} onClick={cancelEdit}>Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+              {c.photo && <img src={c.photo} alt={c.name} style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 15, color: '#0F3D24' }}>{c.num} {c.name}</div>
+                <div style={{ fontSize: 12, color: '#C9A84C', marginBottom: 4 }}>{c.cert}</div>
+                <div style={{ fontSize: 13, color: '#7A6A4A' }}>{c.bio_en}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexDirection: 'column', alignItems: 'flex-end' }}>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button style={S.btn('ghost')} onClick={() => moveCoach(i, -1)} disabled={i === 0}>↑</button>
+                  <button style={S.btn('ghost')} onClick={() => moveCoach(i, 1)} disabled={i === coaches.length - 1}>↓</button>
+                  <button style={S.btn('gold')} onClick={() => startEdit(i)}>Edit</button>
+                  <button style={S.btn('red')} onClick={() => deleteCoach(i)}>Delete</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── FAQs Editor ──────────────────────────────────────────────────────────────
+function FAQsEditor({ data, save }) {
+  const { useState } = React;
+  const blank = { q_en: '', q_zh: '', a_en: '', a_zh: '' };
+  const [faqs, setFaqs] = useState(data.faqs || []);
+  const [editing, setEditing] = useState(null);
+  const [draft, setDraft] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [newF, setNewF] = useState(blank);
+
+  function startEdit(i) { setEditing(i); setDraft({ ...faqs[i] }); }
+  function cancelEdit() { setEditing(null); setDraft(null); }
+
+  async function saveEdit(i) {
+    const updated = faqs.map((f, idx) => idx === i ? draft : f);
+    const ok = await save('faqs', updated);
+    if (ok) { setFaqs(updated); setEditing(null); setDraft(null); }
+  }
+
+  async function deleteFaq(i) {
+    if (!confirm('Delete this FAQ?')) return;
+    const updated = faqs.filter((_, idx) => idx !== i);
+    const ok = await save('faqs', updated);
+    if (ok) setFaqs(updated);
+  }
+
+  async function addFaq() {
+    if (!newF.q_en.trim()) return;
+    const updated = [...faqs, newF];
+    const ok = await save('faqs', updated);
+    if (ok) { setFaqs(updated); setAdding(false); setNewF(blank); }
+  }
+
+  function moveFaq(i, dir) {
+    const updated = [...faqs];
+    const j = i + dir;
+    if (j < 0 || j >= updated.length) return;
+    [updated[i], updated[j]] = [updated[j], updated[i]];
+    setFaqs(updated);
+    save('faqs', updated);
+  }
+
+  const textareaStyle = { ...S.input, height: 72, resize: 'vertical', fontFamily: "'DM Sans', sans-serif" };
+  const faqFields = [
+    ['q_en', 'Question (English)', false],
+    ['q_zh', 'Question (Chinese)', false],
+    ['a_en', 'Answer (English)', true],
+    ['a_zh', 'Answer (Chinese)', true],
+  ];
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <span style={{ fontSize: 14, color: '#7A6A4A' }}>{faqs.length} FAQs</span>
+        <button style={S.btn('gold')} onClick={() => { setAdding(true); setEditing(null); }}>+ Add FAQ</button>
+      </div>
+
+      {adding && (
+        <div style={{ ...S.card, borderColor: '#C9A84C' }}>
+          <div style={{ fontWeight: 600, marginBottom: 12 }}>New FAQ</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            {faqFields.map(([k, l, big]) => (
+              <div key={k}>
+                <div style={S.label}>{l}</div>
+                {big
+                  ? <textarea style={textareaStyle} value={newF[k]} onChange={e => setNewF(f => ({ ...f, [k]: e.target.value }))} />
+                  : <input style={S.input} value={newF[k]} onChange={e => setNewF(f => ({ ...f, [k]: e.target.value }))} />
+                }
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={S.btn('gold')} onClick={addFaq}>Add FAQ</button>
+            <button style={S.btn('ghost')} onClick={() => { setAdding(false); setNewF(blank); }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {faqs.map((f, i) => (
+        <div key={i} style={S.card}>
+          {editing === i ? (
+            <div>
+              <div style={{ fontWeight: 600, marginBottom: 12 }}>Editing FAQ #{i + 1}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                {faqFields.map(([k, l, big]) => (
+                  <div key={k}>
+                    <div style={S.label}>{l}</div>
+                    {big
+                      ? <textarea style={textareaStyle} value={draft[k] || ''} onChange={e => setDraft(d => ({ ...d, [k]: e.target.value }))} />
+                      : <input style={S.input} value={draft[k] || ''} onChange={e => setDraft(d => ({ ...d, [k]: e.target.value }))} />
+                    }
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button style={S.btn('gold')} onClick={() => saveEdit(i)}>Save</button>
+                <button style={S.btn('ghost')} onClick={cancelEdit}>Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 14, color: '#0F3D24', marginBottom: 4 }}>Q: {f.q_en}</div>
+                <div style={{ fontSize: 13, color: '#7A6A4A', marginBottom: 4 }}>A: {f.a_en}</div>
+                <div style={{ fontSize: 12, color: '#9A8A6A' }}>ZH: {f.q_zh}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                <button style={S.btn('ghost')} onClick={() => moveFaq(i, -1)} disabled={i === 0}>↑</button>
+                <button style={S.btn('ghost')} onClick={() => moveFaq(i, 1)} disabled={i === faqs.length - 1}>↓</button>
+                <button style={S.btn('gold')} onClick={() => startEdit(i)}>Edit</button>
+                <button style={S.btn('red')} onClick={() => deleteFaq(i)}>Delete</button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Testimonials Editor ──────────────────────────────────────────────────────
+function TestimonialsEditor({ data, save }) {
+  const { useState } = React;
+  const blank = { quote_en: '', quote_zh: '', name: '', detail: '', avatar: '' };
+  const [items, setItems] = useState(data.testimonials || []);
+  const [editing, setEditing] = useState(null);
+  const [draft, setDraft] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [newT, setNewT] = useState(blank);
+
+  function startEdit(i) { setEditing(i); setDraft({ ...items[i] }); }
+  function cancelEdit() { setEditing(null); setDraft(null); }
+
+  async function saveEdit(i) {
+    const updated = items.map((t, idx) => idx === i ? draft : t);
+    const ok = await save('testimonials', updated);
+    if (ok) { setItems(updated); setEditing(null); setDraft(null); }
+  }
+
+  async function deleteItem(i) {
+    if (!confirm('Delete this testimonial?')) return;
+    const updated = items.filter((_, idx) => idx !== i);
+    const ok = await save('testimonials', updated);
+    if (ok) setItems(updated);
+  }
+
+  async function addItem() {
+    if (!newT.name.trim()) return;
+    const updated = [...items, newT];
+    const ok = await save('testimonials', updated);
+    if (ok) { setItems(updated); setAdding(false); setNewT(blank); }
+  }
+
+  const textareaStyle = { ...S.input, height: 64, resize: 'vertical', fontFamily: "'DM Sans', sans-serif" };
+  const fields = [
+    ['quote_en', 'Quote (English)', true],
+    ['quote_zh', 'Quote (Chinese)', true],
+    ['name', 'Name', false],
+    ['detail', 'Detail (e.g. 32, DUPR 3.5)', false],
+    ['avatar', 'Avatar Photo URL', false],
+  ];
+
+  function renderFields(obj, setObj) {
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+        {fields.map(([k, l, big]) => (
+          <div key={k} style={big ? { gridColumn: '1 / -1' } : {}}>
+            <div style={S.label}>{l}</div>
+            {big
+              ? <textarea style={textareaStyle} value={obj[k] || ''} onChange={e => setObj(o => ({ ...o, [k]: e.target.value }))} />
+              : <input style={S.input} value={obj[k] || ''} onChange={e => setObj(o => ({ ...o, [k]: e.target.value }))} />
+            }
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <span style={{ fontSize: 14, color: '#7A6A4A' }}>{items.length} testimonials</span>
+        <button style={S.btn('gold')} onClick={() => { setAdding(true); setEditing(null); }}>+ Add Testimonial</button>
+      </div>
+
+      {adding && (
+        <div style={{ ...S.card, borderColor: '#C9A84C' }}>
+          <div style={{ fontWeight: 600, marginBottom: 12 }}>New Testimonial</div>
+          {renderFields(newT, setNewT)}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={S.btn('gold')} onClick={addItem}>Add</button>
+            <button style={S.btn('ghost')} onClick={() => { setAdding(false); setNewT(blank); }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {items.map((t, i) => (
+        <div key={i} style={S.card}>
+          {editing === i ? (
+            <div>
+              <div style={{ fontWeight: 600, marginBottom: 12 }}>Editing: {t.name}</div>
+              {renderFields(draft, setDraft)}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button style={S.btn('gold')} onClick={() => saveEdit(i)}>Save</button>
+                <button style={S.btn('ghost')} onClick={cancelEdit}>Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+              {t.avatar && <img src={t.avatar} alt={t.name} style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 14, color: '#1A1208' }}>{t.name} <span style={{ color: '#9A8A6A', fontWeight: 400 }}>{t.detail}</span></div>
+                <div style={{ fontSize: 13, color: '#7A6A4A', fontStyle: 'italic', marginTop: 4 }}>"{t.quote_en}"</div>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                <button style={S.btn('gold')} onClick={() => startEdit(i)}>Edit</button>
+                <button style={S.btn('red')} onClick={() => deleteItem(i)}>Delete</button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Main AdminPage ───────────────────────────────────────────────────────────
 window.AdminPage = function AdminPage({ user, setPage }) {
   const [tab, setTab] = useState('products');
@@ -544,6 +1036,7 @@ window.AdminPage = function AdminPage({ user, setPage }) {
   }
 
   const tabs = [
+    { key: 'content',     label: 'Content' },
     { key: 'products',    label: 'Products' },
     { key: 'pricing',     label: 'Pricing' },
     { key: 'courts',      label: 'Courts' },
@@ -564,6 +1057,7 @@ window.AdminPage = function AdminPage({ user, setPage }) {
           ))}
         </div>
 
+        {tab === 'content'     && <ContentTab />}
         {tab === 'products'    && <ProductsTab />}
         {tab === 'pricing'     && <PricingTab />}
         {tab === 'courts'      && <CourtsTab />}

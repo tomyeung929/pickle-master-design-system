@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--color-cream); padding: 24px; display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  .group { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .box { width: 80px; height: 50px; background: var(--color-white); }
+  .label { font-family: var(--font-label); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-pebble); text-align: center; }
+  .divider { width: 1px; background: var(--color-stone); align-self: stretch; margin: 0 4px; }
+  .radius-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; }
+  .rbox { width: 60px; height: 60px; background: var(--color-forest); display: flex; align-items: center; justify-content: center; }
+  .rlabel { font-family: var(--font-label); font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-cream); text-align: center; font-size:9px;}
+</style></head><body>
+  <div style="display:flex;flex-direction:column;gap:16px;width:100%;">
+    <div style="font-family:var(--font-label);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-pebble);">Shadows</div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;">
+      <div class="group"><div class="box" style="box-shadow:var(--shadow-sm);border-radius:8px;"></div><div class="label">shadow-sm</div></div>
+      <div class="group"><div class="box" style="box-shadow:var(--shadow-md);border-radius:8px;"></div><div class="label">shadow-md</div></div>
+      <div class="group"><div class="box" style="box-shadow:var(--shadow-lg);border-radius:8px;"></div><div class="label">shadow-lg</div></div>
+      <div class="group"><div class="box" style="background:var(--color-gold);box-shadow:var(--shadow-gold);border-radius:8px;"></div><div class="label">shadow-gold</div></div>
+    </div>
+    <div style="font-family:var(--font-label);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-pebble);margin-top:8px;">Border Radius</div>
+    <div class="radius-row">
+      <div class="group"><div class="rbox" style="border-radius:0px;"><div class="rlabel">None<br>0px</div></div></div>
+      <div class="group"><div class="rbox" style="border-radius:4px;"><div class="rlabel">sm<br>4px</div></div></div>
+      <div class="group"><div class="rbox" style="border-radius:8px;"><div class="rlabel">md<br>8px</div></div></div>
+      <div class="group"><div class="rbox" style="border-radius:16px;"><div class="rlabel">lg<br>16px</div></div></div>
+      <div class="group"><div class="rbox" style="border-radius:999px;width:80px;"><div class="rlabel">pill</div></div></div>
+    </div>
+  </div>
+</body></html>

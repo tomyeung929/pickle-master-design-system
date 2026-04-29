@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--color-cream); font-family: var(--font-sans); padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+  .row { display: flex; align-items: center; gap: 12px; }
+  .chip { width: 40px; height: 40px; border-radius: var(--radius-sm); flex-shrink: 0; border: 1px solid rgba(0,0,0,0.06); }
+  .token { font-family: var(--font-sans); font-size: 12px; color: var(--color-forest); width: 200px; }
+  .desc { font-size: 11px; color: var(--color-pebble); }
+</style></head><body>
+  <div class="row"><div class="chip" style="background:var(--color-bg-primary);"></div><div class="token">--color-bg-primary</div><div class="desc">Page background (cream)</div></div>
+  <div class="row"><div class="chip" style="background:var(--color-bg-dark);"></div><div class="token">--color-bg-dark</div><div class="desc">Dark section background</div></div>
+  <div class="row"><div class="chip" style="background:var(--color-fg-primary);"></div><div class="token">--color-fg-primary</div><div class="desc">Primary text (ink)</div></div>
+  <div class="row"><div class="chip" style="background:var(--color-fg-secondary);"></div><div class="token">--color-fg-secondary</div><div class="desc">Secondary / muted text</div></div>
+  <div class="row"><div class="chip" style="background:var(--color-fg-on-dark);"></div><div class="token">--color-fg-on-dark</div><div class="desc">Text on dark backgrounds</div></div>
+  <div class="row"><div class="chip" style="background:var(--color-accent); box-shadow:var(--shadow-gold);"></div><div class="token">--color-accent</div><div class="desc">Primary accent (gold)</div></div>
+  <div class="row"><div class="chip" style="background:var(--color-border);"></div><div class="token">--color-border</div><div class="desc">Default border (stone)</div></div>
+  <div class="row"><div class="chip" style="background:var(--color-border-accent);"></div><div class="token">--color-border-accent</div><div class="desc">Featured border (gold)</div></div>
+</body></html>

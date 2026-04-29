@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--color-cream); padding: 24px; display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  .card { background: var(--color-white); border-radius: var(--radius-md); box-shadow: var(--shadow-md); overflow: hidden; width: 190px; }
+  .card-header { background: var(--color-forest-deep); padding: 16px; }
+  .card-body { padding: 14px; }
+  .card-title { font-family: var(--font-label); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-gold); margin-bottom: 4px; }
+  .card-name { font-family: var(--font-serif); font-size: 17px; font-weight: 700; color: var(--color-cream); line-height: 1.2; }
+  .card-sub { font-family: var(--font-sans); font-size: 12px; color: var(--color-pebble); margin-top: 6px; }
+  .badge { font-family: var(--font-label); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 9px; border-radius: var(--radius-pill); background: var(--color-gold); color: var(--color-forest-deep); display: inline-block; margin-top: 8px; }
+  .card-featured { border: 1.5px solid var(--color-gold); box-shadow: var(--shadow-gold); }
+  .strip { height: 4px; background: var(--color-gold); }
+  .session-card { background: var(--color-white); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 14px; width: 190px; border-top: 3px solid var(--color-court-sage); }
+  .time { font-family: var(--font-label); font-size: 20px; font-weight: 700; color: var(--color-forest-deep); letter-spacing: -0.01em; }
+  .session-title { font-family: var(--font-sans); font-size: 13px; font-weight: 500; color: var(--color-forest); margin-top: 4px; }
+  .meta { font-size: 11px; color: var(--color-pebble); margin-top: 4px; font-family: var(--font-sans); }
+</style></head><body>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Member Card</div>
+      <div class="card-name">Wing-Sze Lam</div>
+      <div class="badge">Pro Member</div>
+    </div>
+    <div class="card-body">
+      <div class="card-sub">Est. 2026 · Court 1 priority</div>
+    </div>
+  </div>
+  <div class="session-card">
+    <div class="time">18:00</div>
+    <div class="session-title">Open Play</div>
+    <div class="meta">Court 1 · Tue · 90 min</div>
+    <div style="margin-top:10px;"><span style="font-family:var(--font-label);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--color-court-sage);color:white;">Available</span></div>
+  </div>
+  <div class="card card-featured" style="width:190px;">
+    <div class="strip"></div>
+    <div class="card-body" style="padding:16px;">
+      <div class="card-title" style="color:var(--color-gold-dark);">Featured Court</div>
+      <div style="font-family:var(--font-serif);font-size:18px;font-weight:700;color:var(--color-forest-deep);margin-top:4px;">Court 2</div>
+      <div class="card-sub">Advanced · Thu 7:00 PM</div>
+    </div>
+  </div>
+</body></html>
