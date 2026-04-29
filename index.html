@@ -86,6 +86,7 @@ window.API = {
 <script type="text/babel" src="/website/BookPage.jsx"></script>
 <script type="text/babel" src="/website/OtherPages-light.jsx"></script>
 <script type="text/babel" src="/website/MorePages-light.jsx"></script>
+<script type="text/babel" src="/website/AdminPage-light.jsx"></script>
 
 <script type="text/babel">
 const { useState, useEffect } = React;
@@ -160,6 +161,7 @@ function App() {
         {page === 'tournament' && <window.TournamentPage {...sharedProps} />}
         {page === 'shop'       && <window.ShopPage      {...sharedProps} />}
         {page === 'faq'        && <window.FAQPage       {...sharedProps} />}
+        {page === 'admin'      && <window.AdminPage     {...sharedProps} />}
       </main>
 
       <window.Footer setPage={setPage} lang={lang} />

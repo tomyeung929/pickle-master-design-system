@@ -8,7 +8,7 @@ async function getUser(req) {
   if (error || !data.user) return null;
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, name, email, tier, stripe_customer_id')
+    .select('id, name, email, tier, stripe_customer_id, is_admin')
     .eq('id', data.user.id)
     .single();
   return profile || null;
@@ -30,8 +30,17 @@ async function parseBody(req) {
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
-module.exports = { getUser, json, parseBody, cors };
+async function requireAdmin(req, res) {
+  const user = await getUser(req);
+  if (!user || !user.is_admin) {
+    json(res, 403, { error: 'Forbidden' });
+    return null;
+  }
+  return user;
+}
+
+module.exports = { getUser, requireAdmin, json, parseBody, cors };

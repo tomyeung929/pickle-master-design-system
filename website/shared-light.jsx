@@ -112,7 +112,10 @@ function Nav({ page, setPage, lang, setLang, user, setUser, cart, setCartOpen, m
               {lang === 'EN' ? '中文' : 'EN'}
             </button>
             {user ? (
-              <button onClick={() => setPage('account')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6B5D4E' }}>{t.nav_account}</button>
+              <>
+                <button onClick={() => setPage('account')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6B5D4E' }}>{t.nav_account}</button>
+                {user.is_admin && <button onClick={() => setPage('admin')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9A84C' }}>Admin</button>}
+              </>
             ) : (
               <button onClick={() => setPage('login')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6B5D4E' }}>{t.nav_login}</button>
             )}
@@ -135,6 +138,7 @@ function Nav({ page, setPage, lang, setLang, user, setUser, cart, setCartOpen, m
             ))}
             <div style={{ borderTop: '1px solid #EDE8DF', margin: '8px 0', padding: '12px 24px 0', display: 'flex', gap: 12 }}>
               <button onClick={() => { setPage(user ? 'account' : 'login'); setMobileOpen(false); }} style={{ background: '#0F3D24', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer', fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9A84C' }}>{user ? t.nav_account : t.nav_login}</button>
+              {user && user.is_admin && <button onClick={() => { setPage('admin'); setMobileOpen(false); }} style={{ background: '#C9A84C', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer', fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#1A1208' }}>Admin</button>}
               <button onClick={() => setLang(lang === 'EN' ? 'ZH' : 'EN')} style={{ background: 'transparent', border: '1px solid #D6CBBA', borderRadius: 4, padding: '8px 14px', cursor: 'pointer', fontFamily: "'Oswald',sans-serif", fontSize: 11, letterSpacing: '0.08em', color: '#6B5D4E' }}>{lang === 'EN' ? '中文' : 'EN'}</button>
             </div>
           </div>
