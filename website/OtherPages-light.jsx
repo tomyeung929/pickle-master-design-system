@@ -242,16 +242,21 @@ function LoginPage({ lang, setUser, setPage }) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-    const body = mode === 'login'
-      ? { email: form.email, password: form.password }
-      : { name: form.name, email: form.email, password: form.password };
-    const res = await window.API.post(endpoint, body);
-    setLoading(false);
-    if (res.error) { setError(res.error); return; }
-    window.API.saveToken(res.session.access_token, res.user);
-    setUser(res.user);
-    setPage('account');
+    try {
+      const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+      const body = mode === 'login'
+        ? { email: form.email, password: form.password }
+        : { name: form.name, email: form.email, password: form.password };
+      const res = await window.API.post(endpoint, body);
+      if (res.error) { setError(res.error); return; }
+      window.API.saveToken(res.session.access_token, res.user);
+      setUser(res.user);
+      setPage('account');
+    } catch (err) {
+      setError('Server error — please try again.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

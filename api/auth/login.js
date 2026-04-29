@@ -17,7 +17,7 @@ module.exports = async function handler(req, res) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, name, email, tier')
+    .select('id, name, email, tier, is_admin')
     .eq('id', data.user.id)
     .single();
 
