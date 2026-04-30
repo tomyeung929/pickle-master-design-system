@@ -580,6 +580,21 @@ function ContentTab() {
 }
 
 // ─── Pages Editor ─────────────────────────────────────────────────────────────
+function ImgInput({ label, value, onChange }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={S.label}>{label}</div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <input style={S.input} value={value || ''} placeholder="https://images.pexels.com/..." onChange={e => onChange(e.target.value)} />
+        {value && (
+          <img src={value} alt="" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
+            onError={e => { e.target.style.display = 'none'; }} />
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PagesEditor({ data, save }) {
   const { useState } = React;
   const defaultHero = { eyebrow_en: '', eyebrow_zh: '', title_en: '', title_zh: '', subtitle_en: '', subtitle_zh: '', video_url: '' };
@@ -608,21 +623,6 @@ function PagesEditor({ data, save }) {
     ['private_hero',   'Private / Corporate Page — Hero Background'],
     ['contact_hero',   'Contact Page — Hero Background'],
   ];
-
-  function ImgInput({ label, value, onChange }) {
-    return (
-      <div style={{ marginBottom: 14 }}>
-        <div style={S.label}>{label}</div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input style={S.input} value={value || ''} placeholder="https://images.pexels.com/..." onChange={e => onChange(e.target.value)} />
-          {value && (
-            <img src={value} alt="" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
-              onError={e => { e.target.style.display = 'none'; }} />
-          )}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>
