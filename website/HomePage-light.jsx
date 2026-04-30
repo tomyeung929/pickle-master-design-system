@@ -19,6 +19,7 @@ function HomePage({ lang, setPage, addToCart }) {
   const [rawTestimonials, setRawTestimonials] = useState(defaultTestimonials);
   const [heroContent, setHeroContent] = useState(null);
   const [lessonImgs, setLessonImgs] = useState(defaultLessonImgs);
+  const [pageImgs, setPageImgs] = useState({});
 
   useEffect(() => {
     window.fetchSiteContent().then(d => {
@@ -27,6 +28,7 @@ function HomePage({ lang, setPage, addToCart }) {
       if (Array.isArray(d.lesson_images) && d.lesson_images.some(u => u)) {
         setLessonImgs(d.lesson_images.map((u, i) => u || defaultLessonImgs[i]));
       }
+      if (d.page_images) setPageImgs(d.page_images);
     });
   }, []);
 
@@ -187,7 +189,7 @@ function HomePage({ lang, setPage, addToCart }) {
       {/* ══ ABOUT — IMAGE BACKGROUND ══ */}
       <section style={{ position: 'relative', padding: '100px 24px', overflow: 'hidden', borderTop: '1px solid #DDD5C8' }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <img src="https://images.pexels.com/photos/7991579/pexels-photo-7991579.jpeg?auto=compress&cs=tinysrgb&w=1400&q=60"
+          <img src={pageImgs.home_about_bg || 'https://images.pexels.com/photos/7991579/pexels-photo-7991579.jpeg?auto=compress&cs=tinysrgb&w=1400&q=60'}
             alt="" loading="lazy"
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(240,234,224,0.93)' }} />

@@ -584,9 +584,11 @@ function PagesEditor({ data, save }) {
   const { useState } = React;
   const defaultHero = { eyebrow_en: '', eyebrow_zh: '', title_en: '', title_zh: '', subtitle_en: '', subtitle_zh: '', video_url: '' };
   const defaultImgs = ['', '', ''];
+  const defaultPageImgs = {};
 
   const [hero, setHero] = useState(data.hero_content || defaultHero);
   const [imgs, setImgs] = useState(Array.isArray(data.lesson_images) ? data.lesson_images : defaultImgs);
+  const [pageImgs, setPageImgs] = useState(data.page_images || defaultPageImgs);
 
   const heroFields = [
     ['eyebrow_en', 'Eyebrow Text (EN)'],
@@ -597,11 +599,36 @@ function PagesEditor({ data, save }) {
     ['subtitle_zh','Hero Subtitle (ZH)'],
   ];
 
+  const bgFields = [
+    ['home_about_bg',  'Home Page — About Section Background'],
+    ['coaches_hero',   'Coaches Page — Hero Background'],
+    ['tournament_hero','Tournaments Page — Hero Background'],
+    ['shop_hero',      'Shop Page — Hero Background'],
+    ['social_hero',    'Social Play Page — Hero Background'],
+    ['private_hero',   'Private / Corporate Page — Hero Background'],
+    ['contact_hero',   'Contact Page — Hero Background'],
+  ];
+
+  function ImgInput({ label, value, onChange }) {
+    return (
+      <div style={{ marginBottom: 14 }}>
+        <div style={S.label}>{label}</div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input style={S.input} value={value || ''} placeholder="https://images.pexels.com/..." onChange={e => onChange(e.target.value)} />
+          {value && (
+            <img src={value} alt="" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
+              onError={e => { e.target.style.display = 'none'; }} />
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div style={S.card}>
-        <div style={{ fontWeight: 600, marginBottom: 4, color: '#1A1208' }}>Hero Section</div>
-        <p style={{ fontSize: 12, color: '#9A8A6A', marginBottom: 16 }}>Text that appears on the home page hero banner. Leave blank to use default language strings.</p>
+        <div style={{ fontWeight: 600, marginBottom: 4, color: '#1A1208' }}>Home Hero — Text & Video</div>
+        <p style={{ fontSize: 12, color: '#9A8A6A', marginBottom: 16 }}>Text on the home page hero banner. Leave blank to use built-in defaults.</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {heroFields.map(([k, l]) => (
             <div key={k}>
@@ -618,22 +645,23 @@ function PagesEditor({ data, save }) {
       </div>
 
       <div style={S.card}>
-        <div style={{ fontWeight: 600, marginBottom: 4, color: '#1A1208' }}>Lesson Cards — Images</div>
-        <p style={{ fontSize: 12, color: '#9A8A6A', marginBottom: 16 }}>The 3 photo cards on the home page (Academy, Private Lesson, Friends Play). Paste any image URL.</p>
+        <div style={{ fontWeight: 600, marginBottom: 4, color: '#1A1208' }}>Home Lesson Cards — Images</div>
+        <p style={{ fontSize: 12, color: '#9A8A6A', marginBottom: 16 }}>The 3 photo cards on the home page (Academy, Private Lesson, Friends Play).</p>
         {['Academy / Group Class', 'Private 1-on-1', 'Friends Group Play'].map((label, i) => (
-          <div key={i} style={{ marginBottom: 14 }}>
-            <div style={S.label}>Image {i + 1} — {label}</div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <input style={S.input} value={imgs[i] || ''} placeholder="https://images.pexels.com/..."
-                onChange={e => { const n = [...imgs]; n[i] = e.target.value; setImgs(n); }} />
-              {imgs[i] && (
-                <img src={imgs[i]} alt="" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
-                  onError={e => { e.target.style.display = 'none'; }} />
-              )}
-            </div>
-          </div>
+          <ImgInput key={i} label={`Image ${i + 1} — ${label}`} value={imgs[i]}
+            onChange={v => { const n = [...imgs]; n[i] = v; setImgs(n); }} />
         ))}
-        <button style={{ ...S.btn('gold'), marginTop: 4 }} onClick={() => save('lesson_images', imgs)}>Save Images</button>
+        <button style={S.btn('gold')} onClick={() => save('lesson_images', imgs)}>Save Lesson Images</button>
+      </div>
+
+      <div style={S.card}>
+        <div style={{ fontWeight: 600, marginBottom: 4, color: '#1A1208' }}>Page Background Images</div>
+        <p style={{ fontSize: 12, color: '#9A8A6A', marginBottom: 16 }}>Hero background photo for each page. Paste any image URL — Pexels, Unsplash, or your own hosted image.</p>
+        {bgFields.map(([k, l]) => (
+          <ImgInput key={k} label={l} value={pageImgs[k]}
+            onChange={v => setPageImgs(p => ({ ...p, [k]: v }))} />
+        ))}
+        <button style={S.btn('gold')} onClick={() => save('page_images', pageImgs)}>Save Page Backgrounds</button>
       </div>
     </div>
   );

@@ -14,8 +14,12 @@ function CoachesPage({ lang, setPage }) {
   ];
 
   const [coaches, setCoaches] = useState(defaultCoaches);
+  const [pageImgs, setPageImgs] = useState({});
   useEffect(() => {
-    window.fetchSiteContent().then(d => { if (d.coaches) setCoaches(d.coaches); });
+    window.fetchSiteContent().then(d => {
+      if (d.coaches) setCoaches(d.coaches);
+      if (d.page_images) setPageImgs(d.page_images);
+    });
   }, []);
 
   const mapped = coaches.map(c => ({
@@ -30,7 +34,7 @@ function CoachesPage({ lang, setPage }) {
       {/* Hero — court action bg */}
       <section style={{ position: 'relative', minHeight: 340, display: 'flex', alignItems: 'center', overflow: 'hidden', padding: '80px 24px 60px' }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <img src="https://images.pexels.com/photos/6765846/pexels-photo-6765846.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65"
+          <img src={pageImgs.coaches_hero || 'https://images.pexels.com/photos/6765846/pexels-photo-6765846.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65'}
             alt="" loading="lazy"
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right,rgba(15,61,36,0.92) 40%,rgba(15,61,36,0.5) 100%)' }} />
@@ -86,11 +90,13 @@ function TournamentPage({ lang, setPage, user }) {
   const [registering, setRegistering] = useState(null);
   const [regSuccess, setRegSuccess] = useState(null);
   const [regError, setRegError] = useState(null);
+  const [pageImgs, setPageImgs] = useState({});
 
   useEffect(() => {
     window.API.get('/api/tournaments').then(res => {
       if (!res.error) setEvents(res.tournaments || []);
     }).catch(() => {});
+    window.fetchSiteContent().then(d => { if (d.page_images) setPageImgs(d.page_images); });
   }, []);
 
   async function handleRegister(ev) {
@@ -118,7 +124,7 @@ function TournamentPage({ lang, setPage, user }) {
       {/* Hero — competition action */}
       <section style={{ position: 'relative', minHeight: 340, display: 'flex', alignItems: 'center', overflow: 'hidden', padding: '80px 24px 60px' }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <img src="https://images.pexels.com/photos/7991579/pexels-photo-7991579.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65"
+          <img src={pageImgs.tournament_hero || 'https://images.pexels.com/photos/7991579/pexels-photo-7991579.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65'}
             alt="" loading="lazy"
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right,rgba(15,61,36,0.92) 40%,rgba(15,61,36,0.5) 100%)' }} />
@@ -183,6 +189,11 @@ function ShopPage({ lang, addToCart, user }) {
   const [cat, setCat] = useState('all');
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [pageImgs, setPageImgs] = useState({});
+
+  useEffect(() => {
+    window.fetchSiteContent().then(d => { if (d.page_images) setPageImgs(d.page_images); });
+  }, []);
 
   useEffect(() => {
     const url = cat === 'all' ? '/api/shop/products' : `/api/shop/products?category=${cat}`;
@@ -215,7 +226,7 @@ function ShopPage({ lang, addToCart, user }) {
       {/* Hero */}
       <section style={{ position: 'relative', padding: '80px 24px 48px', overflow: 'hidden', minHeight: 280, display: 'flex', alignItems: 'center' }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <img src="https://images.pexels.com/photos/9004558/pexels-photo-9004558.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65"
+          <img src={pageImgs.shop_hero || 'https://images.pexels.com/photos/9004558/pexels-photo-9004558.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65'}
             alt="" loading="lazy"
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right,rgba(15,61,36,0.92) 40%,rgba(15,61,36,0.5) 100%)' }} />

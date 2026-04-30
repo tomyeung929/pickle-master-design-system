@@ -3,9 +3,14 @@
 // ─── SOCIAL PAGE ─────────────────────────────────────────────
 function SocialPage({ lang, setPage, addToCart, user }) {
   const t = window.LANG[lang];
-  const { useState } = React;
+  const { useState, useEffect } = React;
   const [added, setAdded] = useState(false);
+  const [pageImgs, setPageImgs] = useState({});
   const price = user ? 160 : 200;
+
+  useEffect(() => {
+    window.fetchSiteContent().then(d => { if (d.page_images) setPageImgs(d.page_images); });
+  }, []);
 
   function book() {
     addToCart({ name: t.nav_social, detail: lang==='EN'?'Open session — next available':'開放課節 — 下一個可用時段', price, qty:1 });
@@ -17,7 +22,7 @@ function SocialPage({ lang, setPage, addToCart, user }) {
       {/* Hero — group of HK players */}
       <section style={{ position:'relative', minHeight:360, display:'flex', alignItems:'center', overflow:'hidden', padding:'80px 24px 60px' }}>
         <div style={{ position:'absolute', inset:0, zIndex:0 }}>
-          <img src="https://images.pexels.com/photos/5568971/pexels-photo-5568971.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65"
+          <img src={pageImgs.social_hero || 'https://images.pexels.com/photos/5568971/pexels-photo-5568971.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65'}
             alt="" loading="lazy"
             style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
           <div style={{ position:'absolute', inset:0, background:'linear-gradient(to right,rgba(15,61,36,0.9) 40%,rgba(15,61,36,0.5) 100%)' }} />
@@ -76,6 +81,11 @@ function SocialPage({ lang, setPage, addToCart, user }) {
 // ─── PRIVATE PAGE ─────────────────────────────────────────────
 function PrivatePage({ lang, setPage }) {
   const t = window.LANG[lang];
+  const { useState, useEffect } = React;
+  const [pageImgs, setPageImgs] = useState({});
+  useEffect(() => {
+    window.fetchSiteContent().then(d => { if (d.page_images) setPageImgs(d.page_images); });
+  }, []);
   const partners = ['LVMH','UNIQLO','SCMP','UBS','Richemont'];
   const offerings = [
     { title:t.private_w1_title, body:t.private_w1 },
@@ -88,7 +98,7 @@ function PrivatePage({ lang, setPage }) {
       {/* Hero — 1-on-1 coaching */}
       <section style={{ position:'relative', minHeight:380, display:'flex', alignItems:'center', overflow:'hidden', padding:'80px 24px 60px' }}>
         <div style={{ position:'absolute', inset:0, zIndex:0 }}>
-          <img src="https://images.pexels.com/photos/6765846/pexels-photo-6765846.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65"
+          <img src={pageImgs.private_hero || 'https://images.pexels.com/photos/6765846/pexels-photo-6765846.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65'}
             alt="" loading="lazy"
             style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center', display:'block' }} />
           <div style={{ position:'absolute', inset:0, background:'linear-gradient(to right,rgba(15,61,36,0.92) 45%,rgba(15,61,36,0.4) 100%)' }} />
@@ -146,7 +156,7 @@ function ContactPage({ lang }) {
   const [loading, setLoading] = useState(false);
   const [error, setError]   = useState(null);
   const [siteContent, setSiteContent] = useState(window.PM_CONTENT || {});
-  useEffect(() => { window.fetchSiteContent().then(d => setSiteContent({ ...window.PM_CONTENT, ...d })); }, []);
+  useEffect(() => { window.fetchSiteContent().then(d => setSiteContent(prev => ({ ...prev, ...d }))); }, []);
 
   async function submit(e) {
     e.preventDefault();
@@ -163,7 +173,7 @@ function ContactPage({ lang }) {
       {/* Hero */}
       <section style={{ position:'relative', padding:'64px 24px 48px', overflow:'hidden' }}>
         <div style={{ position:'absolute', inset:0, zIndex:0 }}>
-          <img src="https://images.pexels.com/photos/3768916/pexels-photo-3768916.jpeg?auto=compress&cs=tinysrgb&w=1400&q=60"
+          <img src={(siteContent.page_images && siteContent.page_images.contact_hero) || 'https://images.pexels.com/photos/3768916/pexels-photo-3768916.jpeg?auto=compress&cs=tinysrgb&w=1400&q=60'}
             alt="" loading="lazy"
             style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
           <div style={{ position:'absolute', inset:0, background:'rgba(15,61,36,0.88)' }} />

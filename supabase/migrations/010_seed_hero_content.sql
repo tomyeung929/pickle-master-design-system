@@ -1,4 +1,4 @@
--- Seed hero_content and lesson_images keys for the admin content editor
+-- Seed hero_content, lesson_images, and page_images keys for the admin content editor
 -- Run in Supabase Dashboard → SQL Editor
 
 INSERT INTO site_content (key, value) VALUES
@@ -17,6 +17,16 @@ INSERT INTO site_content (key, value) VALUES
   "https://images.pexels.com/photos/9004558/pexels-photo-9004558.jpeg?auto=compress&cs=tinysrgb&w=700&q=72",
   "https://images.pexels.com/photos/6765846/pexels-photo-6765846.jpeg?auto=compress&cs=tinysrgb&w=700&q=72",
   "https://images.pexels.com/photos/5568971/pexels-photo-5568971.jpeg?auto=compress&cs=tinysrgb&w=700&q=72"
-]'::jsonb)
+]'::jsonb),
+
+('page_images', '{
+  "home_about_bg":   "https://images.pexels.com/photos/7991579/pexels-photo-7991579.jpeg?auto=compress&cs=tinysrgb&w=1400&q=60",
+  "coaches_hero":    "https://images.pexels.com/photos/6765846/pexels-photo-6765846.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65",
+  "tournament_hero": "https://images.pexels.com/photos/7991579/pexels-photo-7991579.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65",
+  "shop_hero":       "https://images.pexels.com/photos/9004558/pexels-photo-9004558.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65",
+  "social_hero":     "https://images.pexels.com/photos/5568971/pexels-photo-5568971.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65",
+  "private_hero":    "https://images.pexels.com/photos/6765846/pexels-photo-6765846.jpeg?auto=compress&cs=tinysrgb&w=1400&q=65",
+  "contact_hero":    "https://images.pexels.com/photos/3768916/pexels-photo-3768916.jpeg?auto=compress&cs=tinysrgb&w=1400&q=60"
+}'::jsonb)
 
 ON CONFLICT (key) DO NOTHING;
