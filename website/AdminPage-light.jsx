@@ -529,28 +529,32 @@ function ContentTab() {
   useEffect(() => {
     setLoading(true);
     window.API.get('/api/admin/content').then(r => {
+      if (r.error) { setErr('Failed to load content: ' + r.error); setLoading(false); return; }
       if (r.content) {
         const map = {};
         r.content.forEach(row => { map[row.key] = row.value; });
         setData(map);
       }
       setLoading(false);
-    });
+    }).catch(() => { setErr('Network error loading content'); setLoading(false); });
   }, []);
 
   async function save(key, value) {
     setErr(''); setMsg('');
     const r = await window.API.post('/api/admin/content', { key, value });
     if (r.error) { setErr(r.error); return false; }
+    window._pmContentPromise = null;   // bust cache so live pages re-fetch on next visit
+    if (window.PM_CONTENT) window.PM_CONTENT[key] = value;  // optimistic update in current session
     setData(d => ({ ...d, [key]: value }));
-    setMsg('Saved'); setTimeout(() => setMsg(''), 2500);
+    setMsg('Saved ✓'); setTimeout(() => setMsg(''), 2500);
     return true;
   }
 
   const subTabs = [
-    { key: 'contact', label: 'Contact & Hours' },
-    { key: 'coaches', label: 'Coaches' },
-    { key: 'faqs',    label: 'FAQs' },
+    { key: 'pages',        label: 'Pages' },
+    { key: 'contact',      label: 'Contact & Hours' },
+    { key: 'coaches',      label: 'Coaches' },
+    { key: 'faqs',         label: 'FAQs' },
     { key: 'testimonials', label: 'Testimonials' },
   ];
 
@@ -566,10 +570,71 @@ function ContentTab() {
         ))}
       </div>
 
+      {sub === 'pages'        && <PagesEditor data={data} save={save} />}
       {sub === 'contact'      && <ContactHoursEditor data={data} save={save} />}
       {sub === 'coaches'      && <CoachesEditor data={data} save={save} />}
       {sub === 'faqs'         && <FAQsEditor data={data} save={save} />}
       {sub === 'testimonials' && <TestimonialsEditor data={data} save={save} />}
+    </div>
+  );
+}
+
+// ─── Pages Editor ─────────────────────────────────────────────────────────────
+function PagesEditor({ data, save }) {
+  const { useState } = React;
+  const defaultHero = { eyebrow_en: '', eyebrow_zh: '', title_en: '', title_zh: '', subtitle_en: '', subtitle_zh: '', video_url: '' };
+  const defaultImgs = ['', '', ''];
+
+  const [hero, setHero] = useState(data.hero_content || defaultHero);
+  const [imgs, setImgs] = useState(Array.isArray(data.lesson_images) ? data.lesson_images : defaultImgs);
+
+  const heroFields = [
+    ['eyebrow_en', 'Eyebrow Text (EN)'],
+    ['eyebrow_zh', 'Eyebrow Text (ZH)'],
+    ['title_en',   'Hero Title (EN) — use \\n for line break'],
+    ['title_zh',   'Hero Title (ZH)'],
+    ['subtitle_en','Hero Subtitle (EN)'],
+    ['subtitle_zh','Hero Subtitle (ZH)'],
+  ];
+
+  return (
+    <div>
+      <div style={S.card}>
+        <div style={{ fontWeight: 600, marginBottom: 4, color: '#1A1208' }}>Hero Section</div>
+        <p style={{ fontSize: 12, color: '#9A8A6A', marginBottom: 16 }}>Text that appears on the home page hero banner. Leave blank to use default language strings.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {heroFields.map(([k, l]) => (
+            <div key={k}>
+              <div style={S.label}>{l}</div>
+              <input style={S.input} value={hero[k] || ''} onChange={e => setHero(h => ({ ...h, [k]: e.target.value }))} />
+            </div>
+          ))}
+          <div style={{ gridColumn: '1 / -1' }}>
+            <div style={S.label}>Hero Background Video URL</div>
+            <input style={S.input} value={hero.video_url || ''} onChange={e => setHero(h => ({ ...h, video_url: e.target.value }))} placeholder="https://videos.pexels.com/..." />
+          </div>
+        </div>
+        <button style={{ ...S.btn('gold'), marginTop: 16 }} onClick={() => save('hero_content', hero)}>Save Hero Content</button>
+      </div>
+
+      <div style={S.card}>
+        <div style={{ fontWeight: 600, marginBottom: 4, color: '#1A1208' }}>Lesson Cards — Images</div>
+        <p style={{ fontSize: 12, color: '#9A8A6A', marginBottom: 16 }}>The 3 photo cards on the home page (Academy, Private Lesson, Friends Play). Paste any image URL.</p>
+        {['Academy / Group Class', 'Private 1-on-1', 'Friends Group Play'].map((label, i) => (
+          <div key={i} style={{ marginBottom: 14 }}>
+            <div style={S.label}>Image {i + 1} — {label}</div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input style={S.input} value={imgs[i] || ''} placeholder="https://images.pexels.com/..."
+                onChange={e => { const n = [...imgs]; n[i] = e.target.value; setImgs(n); }} />
+              {imgs[i] && (
+                <img src={imgs[i]} alt="" style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
+                  onError={e => { e.target.style.display = 'none'; }} />
+              )}
+            </div>
+          </div>
+        ))}
+        <button style={{ ...S.btn('gold'), marginTop: 4 }} onClick={() => save('lesson_images', imgs)}>Save Images</button>
+      </div>
     </div>
   );
 }

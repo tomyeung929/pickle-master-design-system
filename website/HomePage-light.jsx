@@ -10,12 +10,32 @@ function HomePage({ lang, setPage, addToCart }) {
     { quote_en: "Pickle Master is where serious players and total beginners come together. The coaching is world class.", quote_zh: "匹匠讓認真的球員和初學者走在一起。教練質素一流。", name: 'Ken', detail: '43, Designer', avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=200' },
   ];
 
+  const defaultLessonImgs = [
+    'https://images.pexels.com/photos/9004558/pexels-photo-9004558.jpeg?auto=compress&cs=tinysrgb&w=700&q=72',
+    'https://images.pexels.com/photos/6765846/pexels-photo-6765846.jpeg?auto=compress&cs=tinysrgb&w=700&q=72',
+    'https://images.pexels.com/photos/5568971/pexels-photo-5568971.jpeg?auto=compress&cs=tinysrgb&w=700&q=72',
+  ];
+
   const [rawTestimonials, setRawTestimonials] = useState(defaultTestimonials);
+  const [heroContent, setHeroContent] = useState(null);
+  const [lessonImgs, setLessonImgs] = useState(defaultLessonImgs);
+
   useEffect(() => {
-    window.fetchSiteContent().then(d => { if (d.testimonials) setRawTestimonials(d.testimonials); });
+    window.fetchSiteContent().then(d => {
+      if (d.testimonials) setRawTestimonials(d.testimonials);
+      if (d.hero_content) setHeroContent(d.hero_content);
+      if (Array.isArray(d.lesson_images) && d.lesson_images.some(u => u)) {
+        setLessonImgs(d.lesson_images.map((u, i) => u || defaultLessonImgs[i]));
+      }
+    });
   }, []);
 
   const testimonials = rawTestimonials.map(item => ({ ...item, quote: lang === 'EN' ? item.quote_en : item.quote_zh }));
+
+  const heroEyebrow  = (heroContent && (lang === 'EN' ? heroContent.eyebrow_en  : heroContent.eyebrow_zh))  || t.home_eyebrow;
+  const heroTitle    = (heroContent && (lang === 'EN' ? heroContent.title_en    : heroContent.title_zh))    || t.home_hero_title;
+  const heroSubtitle = (heroContent && (lang === 'EN' ? heroContent.subtitle_en : heroContent.subtitle_zh)) || t.home_hero_sub;
+  const heroVideoUrl = (heroContent && heroContent.video_url) || 'https://videos.pexels.com/video-files/32041192/32041192-hd_1920_1080_25fps.mp4';
 
   const rules = [
     { title: t.home_rule1_title, body: t.home_rule1 },
@@ -25,12 +45,6 @@ function HomePage({ lang, setPage, addToCart }) {
     { title: t.home_rule5_title, body: t.home_rule5 },
   ];
 
-  // Asian players in pickleball action — all lazy loaded
-  const lessonImgs = [
-    'https://images.pexels.com/photos/9004558/pexels-photo-9004558.jpeg?auto=compress&cs=tinysrgb&w=700&q=72',
-    'https://images.pexels.com/photos/6765846/pexels-photo-6765846.jpeg?auto=compress&cs=tinysrgb&w=700&q=72',
-    'https://images.pexels.com/photos/5568971/pexels-photo-5568971.jpeg?auto=compress&cs=tinysrgb&w=700&q=72',
-  ];
 
   return (
     <div style={{ background: '#FDFAF5' }}>
@@ -38,13 +52,10 @@ function HomePage({ lang, setPage, addToCart }) {
       {/* ══ HERO — VIDEO BACKGROUND ══ */}
       <section style={{ position: 'relative', minHeight: '92vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '80px 24px' }}>
 
-        {/* VIDEO — preload="none" = zero bytes on initial load; poster shows instantly */}
         <video autoPlay muted loop playsInline preload="none"
           poster="../assets/Court_layout.jpeg"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}>
-          {/* Pexels — Aerial Pickleball Match on Court (ID 32041192) */}
-          <source src="https://videos.pexels.com/video-files/32041192/32041192-hd_1920_1080_25fps.mp4" type="video/mp4" />
-          <source src="https://videos.pexels.com/video-files/32041192/32041192-sd_960_540_25fps.mp4" type="video/mp4" />
+          <source src={heroVideoUrl} type="video/mp4" />
         </video>
 
         {/* Gradient overlay */}
@@ -52,9 +63,9 @@ function HomePage({ lang, setPage, addToCart }) {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg,transparent,#C9A84C,transparent)', zIndex: 2 }} />
 
         <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: 700 }}>
-          <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 12, letterSpacing: '0.25em', textTransform: 'uppercase', color: '#C9A84C', marginBottom: 20 }}>{t.home_eyebrow}</div>
-          <h1 style={{ fontFamily: "'Playfair Display SC',serif", fontSize: 'clamp(40px,7vw,80px)', fontWeight: 700, color: '#F5F0E8', lineHeight: 1.1, letterSpacing: '0.03em', marginBottom: 24, whiteSpace: 'pre-line', textShadow: '0 2px 20px rgba(0,0,0,0.3)' }}>{t.home_hero_title}</h1>
-          <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 'clamp(16px,2vw,20px)', color: 'rgba(245,240,232,0.82)', lineHeight: 1.6, maxWidth: 500, margin: '0 auto 40px' }}>{t.home_hero_sub}</p>
+          <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 12, letterSpacing: '0.25em', textTransform: 'uppercase', color: '#C9A84C', marginBottom: 20 }}>{heroEyebrow}</div>
+          <h1 style={{ fontFamily: "'Playfair Display SC',serif", fontSize: 'clamp(40px,7vw,80px)', fontWeight: 700, color: '#F5F0E8', lineHeight: 1.1, letterSpacing: '0.03em', marginBottom: 24, whiteSpace: 'pre-line', textShadow: '0 2px 20px rgba(0,0,0,0.3)' }}>{heroTitle}</h1>
+          <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 'clamp(16px,2vw,20px)', color: 'rgba(245,240,232,0.82)', lineHeight: 1.6, maxWidth: 500, margin: '0 auto 40px' }}>{heroSubtitle}</p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => setPage('book')} style={{ background: '#C9A84C', color: '#0F3D24', border: 'none', borderRadius: 999, padding: '16px 36px', fontFamily: "'Oswald',sans-serif", fontSize: 14, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 4px 24px rgba(201,168,76,0.5)' }}>{t.home_cta_book}</button>
             <button onClick={() => setPage('member')} style={{ background: 'transparent', color: '#F5F0E8', border: '1.5px solid rgba(245,240,232,0.5)', borderRadius: 999, padding: '16px 36px', fontFamily: "'Oswald',sans-serif", fontSize: 14, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', backdropFilter: 'blur(4px)' }}>{t.home_cta_member}</button>
