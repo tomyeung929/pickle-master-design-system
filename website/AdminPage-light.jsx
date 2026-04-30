@@ -520,7 +520,7 @@ function UsersTab() {
 // ─── Content Tab ─────────────────────────────────────────────────────────────
 function ContentTab() {
   const { useState, useEffect, useCallback } = React;
-  const [sub, setSub] = useState('contact');
+  const [sub, setSub] = useState('pages');
   const [data, setData] = useState({});
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -1104,7 +1104,7 @@ function TestimonialsEditor({ data, save }) {
 
 // ─── Main AdminPage ───────────────────────────────────────────────────────────
 window.AdminPage = function AdminPage({ user, setPage }) {
-  const [tab, setTab] = useState('products');
+  const [tab, setTab] = useState('content');
 
   if (!user) {
     return (
